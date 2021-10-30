@@ -1,6 +1,6 @@
 /*
     DroidShash - An Android chess program.
-    Copyright (C) 2011-2014  Peter Österlund, amchesssterlund2@gmail.com
+    Copyright (C) 2011-2014  Peter Österlund, peterosterlund2@gmail.com
     Copyright (C) 2012 Leo Mayer
 
     This program is free software: you can redistribute it and/or modify
