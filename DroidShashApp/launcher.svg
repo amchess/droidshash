@@ -1,58 +1,329 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1500" height="1500">
-  <g style="fill:none; fill-opacity:1; fill-rule:evenodd;
-            stroke:#000000; stroke-width:1.5;
-            stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;
-            stroke-dasharray:none; stroke-opacity:1;"
-     transform="matrix(1,0,0,-1,250,1250)">
-    <path
-      d="M 500 431 q -63 0 -110 5 q -15 1 -26 3 q 8 -15 8 -31 q 0 -17 -7 -31 q
-         21 7 89 11 q 21 1 46 1 q 99 0 135 -12 q -8 14 -8 31 q 0 15 8 31 q -58
-         -8 -135 -8 z
-         M 500 884 q -16 0 -27.5 -11.5 t -11.5 -25.5 q 0 -16 11.5 -26.5 t 27.5
-         -10.5 q 15 0 27 10.5 t 12 26.5 q 0 15 -12 26 t -27 11 z
-         M 500 352 q -41 0 -123 -8 q -24 -5 -24 -24 q 0 -16 68 -19 q -14 1 79 1
-         q 146 0 146 18 q 0 23 -46 29 q -8 1 -63 2 q -10 0 -27 1 h -10 z
-         M 499 467 q 139 0 171 26 q 22 17 31 87 q -5 62 -81 120 q -72 55 -122 61
-         q -48 -6 -119 -61 q -75 -58 -80 -120 q 5 -37 9 -51 q 9 -29 29 -41 q 34
-         -21 162 -21 z
-         M 477 528 v 56 h -42 v 48 h 42 v 54 h 46 v -54 h 42 v -48 h -42 v -56 h
-         -46 z
-         M 498 274 q -8 0 -33 -19 q -17 -13 -34 -25 t -33 -14 q -37 -13 -92 -18
-         q -8 0 -40 -2 q -48 -2 -60 -4 q -40 -9 -40 -34 q 5 -25 26 -25 q 5 0 28
-         4 q 29 6 39 6 q 60 0 136 18 q 80 20 105 67 q 15 -29 56 -49 q 48 -23 119
-         -31 l 33 -4 q 17 -1 32 -1 q 11 0 40 -6 q 22 -4 27 -4 q 22 0 27 25 q 0
-         25 -40 34 q -13 2 -60 4 q -23 1 -74 6 q -26 3 -58 14 q -16 3 -32 13 q
-         -10 5 -33 23 q -27 22 -39 22 z
-         M 500 165 q -48 -50 -148 -60 q -47 -4 -140 -18 q -26 -6 -29 -24 q -33
-         14 -61 63 q -14 23 -26 39 q 42 79 103 79 q 12 0 36.5 -2 t 36.5 -2 q 56
-         0 120 24 q -88 10 -88 53 q 0 13 12.5 47.5 t 12.5 50.5 q -75 82 -75 155
-         q 0 82 81 150 q 71 60 105 63 q -27 33 -27 71 q 0 36 26 57 q 23 19 61 19
-         q 37 0 61.5 -20.5 t 24.5 -55.5 q 0 -38 -26 -71 q 36 -4 106 -64 q 80 -67
-         80 -149 q 0 -72 -75 -155 q 0 -16 12.5 -50.5 t 12.5 -47.5 q 0 -43 -89
-         -53 q 64 -24 120 -24 q 13 0 37 2 t 37 2 q 61 0 103 -79 q -19 -29 -37
-         -58 q -21 -31 -50 -44 q -4 21 -48 29 q -10 2 -62 7 q -156 14 -207 66 z"
-      style="fill:#000000; stroke:#000000;" />
-   <path
-      d="M 500 431 q -63 0 -110 5 q -15 1 -26 3 q 8 -15 8 -31 q 0 -17 -7 -31 q
-         21 7 89 11 q 21 1 46 1 q 99 0 135 -12 q -8 14 -8 31 q 0 15 8 31 q -58
-         -8 -135 -8 z
-         M 500 884 q -16 0 -27.5 -11.5 t -11.5 -25.5 q 0 -16 11.5 -26.5 t 27.5
-         -10.5 q 15 0 27 10.5 t 12 26.5 q 0 15 -12 26 t -27 11 z
-         M 500 352 q -41 0 -123 -8 q -24 -5 -24 -24 q 0 -16 68 -19 q -14 1 79 1
-         q 146 0 146 18 q 0 23 -46 29 q -8 1 -63 2 q -10 0 -27 1 h -10 z
-         M 499 467 q 139 0 171 26 q 22 17 31 87 q -5 62 -81 120 q -72 55 -122 61
-         q -48 -6 -119 -61 q -75 -58 -80 -120 q 5 -37 9 -51 q 9 -29 29 -41 q 34
-         -21 162 -21 z
-         M 477 528 v 56 h -42 v 48 h 42 v 54 h 46 v -54 h 42 v -48 h -42 v -56 h
-         -46 z
-         M 498 274 q -8 0 -33 -19 q -17 -13 -34 -25 t -33 -14 q -37 -13 -92 -18
-         q -8 0 -40 -2 q -48 -2 -60 -4 q -40 -9 -40 -34 q 5 -25 26 -25 q 5 0 28
-         4 q 29 6 39 6 q 60 0 136 18 q 80 20 105 67 q 15 -29 56 -49 q 48 -23 119
-         -31 l 33 -4 q 17 -1 32 -1 q 11 0 40 -6 q 22 -4 27 -4 q 22 0 27 25 q 0
-         25 -40 34 q -13 2 -60 4 q -23 1 -74 6 q -26 3 -58 14 q -16 3 -32 13 q
-         -10 5 -33 23 q -27 22 -39 22 z"
-      style="fill:#ffffff; stroke:#000000;" />
-  </g>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 25.4.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Livello_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1500 1500" style="enable-background:new 0 0 1500 1500;" xml:space="preserve">
+<style type="text/css">
+	.st0{clip-path:url(#SVGID_00000178176442698968132910000017428733539846529968_);fill:#54BBAB;}
+	.st1{clip-path:url(#SVGID_00000039820561255110895540000013230989528853348024_);fill:#E30613;}
+	.st2{clip-path:url(#SVGID_00000039820561255110895540000013230989528853348024_);}
+	.st3{clip-path:url(#SVGID_00000171698450710100591560000000142220532674870162_);fill:none;stroke:#1D1D1B;stroke-width:0.202;}
+	.st4{filter:url(#Adobe_OpacityMaskFilter);}
+	.st5{clip-path:url(#SVGID_00000171698450710100591560000000142220532674870162_);}
+	
+		.st6{clip-path:url(#SVGID_00000171698450710100591560000000142220532674870162_);mask:url(#SVGID_00000023279939802074998500000007597994311126946226_);}
+	.st7{opacity:0.75;clip-path:url(#SVGID_00000041980628436957235820000005630458244838762417_);fill:#1D1D1B;}
+	.st8{fill:none;stroke:#FFFFFF;stroke-width:1.28;stroke-linejoin:round;stroke-miterlimit:1;}
+	.st9{font-family:'MarketDeco';}
+	.st10{font-size:279.9795px;}
+	.st11{fill:#FFFFFF;}
+	.st12{filter:url(#Adobe_OpacityMaskFilter_00000021118866711064886500000012388836471461094841_);}
+	.st13{clip-path:url(#SVGID_00000054238436999788422300000011286243658656787341_);}
+	
+		.st14{clip-path:url(#SVGID_00000054238436999788422300000011286243658656787341_);mask:url(#SVGID_00000103977275250040676820000002612175711795913374_);}
+	.st15{opacity:0.75;clip-path:url(#SVGID_00000053527398008297459440000002513874439898951101_);fill:#1D1D1B;}
+	.st16{clip-path:url(#SVGID_00000039820561255110895540000013230989528853348024_);fill:#FFFFFF;}
+	.st17{fill:#E30613;}
+	.st18{font-family:'AberforthTiles-Regular';}
+	.st19{font-size:116.5541px;}
+	.st20{font-family:'FuturaStd-CondensedBold';}
+	.st21{font-size:49.614px;}
+	.st22{filter:url(#Adobe_OpacityMaskFilter_00000090265861594536325540000008622130083373551773_);}
+	.st23{mask:url(#SVGID_00000002378757375840017880000001712164479527676324_);}
+	.st24{opacity:0.75;clip-path:url(#SVGID_00000085212101581367257650000001482930791772104379_);fill:#1D1D1B;}
+	.st25{filter:url(#Adobe_OpacityMaskFilter_00000059288875857454901820000009789798055672243122_);}
+	.st26{mask:url(#SVGID_00000139271997645422287730000007971653296013028259_);}
+	.st27{opacity:0.75;clip-path:url(#SVGID_00000179640208002690147500000015999806163736606338_);fill:#1D1D1B;}
+	.st28{fill:#0000CC;stroke:#FFFFFF;stroke-width:7;stroke-miterlimit:10;}
+	.st29{font-family:'TheWantersDEMO';}
+	.st30{font-size:500px;}
+	.st31{font-size:200px;}
+</style>
+<g>
+	<defs>
+		<rect id="SVGID_1_" x="67.3" y="60.6" width="1371.2" height="1371.2"/>
+	</defs>
+	<clipPath id="SVGID_00000101088905229418775400000015026801583434657177_">
+		<use xlink:href="#SVGID_1_"  style="overflow:visible;"/>
+	</clipPath>
+	<path style="clip-path:url(#SVGID_00000101088905229418775400000015026801583434657177_);fill:#54BBAB;" d="M207.9,60.6
+		c-77.7,0-140.6,63-140.6,140.6v1089.9c0,77.7,63,140.6,140.6,140.6h1089.9c77.7,0,140.6-63,140.6-140.6V201.2
+		c0-77.7-63-140.6-140.6-140.6H207.9z"/>
+</g>
+<g>
+	<defs>
+		<rect id="SVGID_00000139272370910048786340000013841692388799985285_" x="192.4" y="569.7" width="1111.1" height="803.6"/>
+	</defs>
+	<clipPath id="SVGID_00000096061360349918290140000002169766072410670995_">
+		<use xlink:href="#SVGID_00000139272370910048786340000013841692388799985285_"  style="overflow:visible;"/>
+	</clipPath>
+	
+		<rect x="712.9" y="587.1" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -220.9487 711.4031)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="813" y="686.9" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -262.2331 811.4136)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="913" y="786.9" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -303.6382 911.3743)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="1013" y="886.7" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -344.9218 1011.3849)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="712.7" y="687.3" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -291.874 740.5806)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="812.8" y="787.1" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -333.1583 840.5911)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="912.7" y="887.1" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -374.5631 940.5519)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="1012.8" y="986.9" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -415.8475 1040.5626)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="612.7" y="687.3" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -321.1518 669.8977)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="712.8" y="787.1" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -362.4361 769.9085)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="812.8" y="887.1" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -403.8409 869.869)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="912.8" y="986.9" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -445.1253 969.8797)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="612.5" y="787.5" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -392.077 699.0752)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="712.6" y="887.3" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -433.3611 799.0861)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="812.5" y="987.3" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -474.7661 899.0464)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="912.6" y="1087.1" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -516.0504 999.0569)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="512.5" y="788" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -421.7067 628.5565)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="612.6" y="887.8" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -462.991 728.5669)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="712.6" y="987.8" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -504.3958 828.5282)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="812.7" y="1087.6" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -545.6801 928.5383)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="512.3" y="888.2" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -492.6318 657.7336)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="612.4" y="988" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -533.9162 757.7444)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="712.3" y="1088" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -575.321 857.7055)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="812.4" y="1187.8" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -616.6053 957.7158)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="412.3" y="888.2" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -521.9097 587.0509)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="512.4" y="988" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -563.194 687.0615)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="612.4" y="1088" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -604.5991 787.022)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="712.5" y="1187.8" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -645.8832 887.0333)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="412.1" y="988.4" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -592.8349 616.2284)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="512.2" y="1088.2" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -634.1191 716.2388)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="612.1" y="1188.2" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -675.524 816.2)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	
+		<rect x="712.2" y="1288" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -716.8085 916.2087)" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="70.7" height="70.7"/>
+	<g style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);">
+		<defs>
+			<rect id="SVGID_00000103943451561735788780000013518222583539079851_" x="192.4" y="569.7" width="1111.1" height="803.6"/>
+		</defs>
+		<clipPath id="SVGID_00000124864818387891456180000006901638051876077964_">
+			<use xlink:href="#SVGID_00000103943451561735788780000013518222583539079851_"  style="overflow:visible;"/>
+		</clipPath>
+		
+			<rect x="464.6" y="688.2" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -467.9228 813.412)" style="clip-path:url(#SVGID_00000124864818387891456180000006901638051876077964_);fill:none;stroke:#1D1D1B;stroke-width:0.202;" width="566.6" height="566.6"/>
+		<defs>
+			<filter id="Adobe_OpacityMaskFilter" filterUnits="userSpaceOnUse" x="390.1" y="897.3" width="758.1" height="242.1">
+				<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+			</filter>
+		</defs>
+		
+			<mask maskUnits="userSpaceOnUse" x="390.1" y="897.3" width="758.1" height="242.1" id="SVGID_00000095301295052848260210000012502999278969946771_">
+			<g class="st4">
+				<g>
+					<defs>
+						<rect id="SVGID_00000013188242389282770730000014796540149749254079_" x="120.2" y="813.9" width="1301.9" height="412.8"/>
+					</defs>
+					
+						<clipPath id="SVGID_00000005229032317333797040000010763816534344934529_" style="clip-path:url(#SVGID_00000124864818387891456180000006901638051876077964_);">
+						<use xlink:href="#SVGID_00000013188242389282770730000014796540149749254079_"  style="overflow:visible;"/>
+					</clipPath>
+					<g style="clip-path:url(#SVGID_00000005229032317333797040000010763816534344934529_);">
+						
+							<image style="overflow:visible;" width="328" height="104" xlink:href="3FFBCFF2AE74C475.jpg"  transform="matrix(3.9691 0 0 3.9691 120.1506 813.9118)">
+						</image>
+					</g>
+				</g>
+			</g>
+		</mask>
+		
+			<g style="clip-path:url(#SVGID_00000124864818387891456180000006901638051876077964_);mask:url(#SVGID_00000095301295052848260210000012502999278969946771_);">
+			<g>
+				<defs>
+					<rect id="SVGID_00000031172157857288225020000005369405312540119719_" x="390.1" y="897.3" width="758.1" height="242.1"/>
+				</defs>
+				<clipPath id="SVGID_00000159464655722468712590000009460180253528049041_">
+					<use xlink:href="#SVGID_00000031172157857288225020000005369405312540119719_"  style="overflow:visible;"/>
+				</clipPath>
+				
+					<rect x="390.1" y="897.3" style="opacity:0.75;clip-path:url(#SVGID_00000159464655722468712590000009460180253528049041_);fill:#1D1D1B;" width="758.1" height="242.1"/>
+			</g>
+		</g>
+		<g style="clip-path:url(#SVGID_00000124864818387891456180000006901638051876077964_);">
+			<text transform="matrix(1 0 0 1 373.5297 1096.2306)" class="st8 st9 st10">chess</text>
+		</g>
+	</g>
+	<g style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);">
+		<text transform="matrix(1 0 0 1 373.5297 1096.2306)" class="st11 st9 st10">chess</text>
+	</g>
+	<g style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);">
+		<defs>
+			<rect id="SVGID_00000163063755250789460780000002468925511802196354_" x="192.4" y="569.7" width="1111.1" height="803.6"/>
+		</defs>
+		<clipPath id="SVGID_00000071544930153050538580000001933076704333990790_">
+			<use xlink:href="#SVGID_00000163063755250789460780000002468925511802196354_"  style="overflow:visible;"/>
+		</clipPath>
+		<defs>
+			
+				<filter id="Adobe_OpacityMaskFilter_00000062172398645106956150000015541460324916917158_" filterUnits="userSpaceOnUse" x="481.9" y="744" width="539.8" height="115.1">
+				<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+			</filter>
+		</defs>
+		
+			<mask maskUnits="userSpaceOnUse" x="481.9" y="744" width="539.8" height="115.1" id="SVGID_00000132072292197586567230000007359904523113052836_">
+			<g style="filter:url(#Adobe_OpacityMaskFilter_00000062172398645106956150000015541460324916917158_);">
+				<g>
+					<defs>
+						<rect id="SVGID_00000002368994928735287680000012384842339826415794_" x="331" y="624.9" width="889.1" height="285.8"/>
+					</defs>
+					
+						<clipPath id="SVGID_00000049903538768481692070000003722542945281220756_" style="clip-path:url(#SVGID_00000071544930153050538580000001933076704333990790_);">
+						<use xlink:href="#SVGID_00000002368994928735287680000012384842339826415794_"  style="overflow:visible;"/>
+					</clipPath>
+					<g style="clip-path:url(#SVGID_00000049903538768481692070000003722542945281220756_);">
+						
+							<image style="overflow:visible;" width="224" height="72" xlink:href="3FFBCFF2AE74C477.jpg"  transform="matrix(3.9691 0 0 3.9691 331.044 624.9103)">
+						</image>
+					</g>
+				</g>
+			</g>
+		</mask>
+		
+			<g style="clip-path:url(#SVGID_00000071544930153050538580000001933076704333990790_);mask:url(#SVGID_00000132072292197586567230000007359904523113052836_);">
+			<g>
+				<defs>
+					<rect id="SVGID_00000003069671769778806760000005270891209288148360_" x="481.9" y="744" width="539.8" height="115.1"/>
+				</defs>
+				<clipPath id="SVGID_00000003811816750407484430000002244143515219134854_">
+					<use xlink:href="#SVGID_00000003069671769778806760000005270891209288148360_"  style="overflow:visible;"/>
+				</clipPath>
+				
+					<rect x="481.9" y="744" style="opacity:0.75;clip-path:url(#SVGID_00000003811816750407484430000002244143515219134854_);fill:#1D1D1B;" width="539.8" height="115.1"/>
+			</g>
+		</g>
+	</g>
+	
+		<rect x="494" y="748.5" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#FFFFFF;" width="62.1" height="79.7"/>
+	
+		<rect x="603.1" y="748.5" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#FFFFFF;" width="62.1" height="79.7"/>
+	
+		<rect x="712.2" y="747.6" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#FFFFFF;" width="62.1" height="79.7"/>
+	
+		<rect x="821.4" y="748.5" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#FFFFFF;" width="62.1" height="79.7"/>
+	
+		<rect x="930.5" y="748.5" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#FFFFFF;" width="62.1" height="79.7"/>
+	<g style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);">
+		<text transform="matrix(1 0 0 1 470.31 815.9455)" class="st17 st18 st19">A</text>
+	</g>
+	<g style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);">
+		<text transform="matrix(1 0 0 1 577.5385 814.5529)" class="st17 st18 st19">L</text>
+	</g>
+	<g style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);">
+		<text transform="matrix(1 0 0 1 685.6996 815.9455)" class="st17 st18 st19">PHA</text>
+	</g>
+	
+		<rect x="534.9" y="1239.5" style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);fill:#E30613;" width="404.8" height="55.1"/>
+	<g style="clip-path:url(#SVGID_00000096061360349918290140000002169766072410670995_);">
+		<text transform="matrix(1 0 0 1 568.52 1285.5822)" class="st11 st20 st21">AI chess revolution</text>
+	</g>
+</g>
+<g>
+	<g>
+		<defs>
+			
+				<filter id="Adobe_OpacityMaskFilter_00000065035079374415074920000016887735765079119527_" filterUnits="userSpaceOnUse" x="110.4" y="153.2" width="690.6" height="476.3">
+				<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+			</filter>
+		</defs>
+		
+			<mask maskUnits="userSpaceOnUse" x="110.4" y="153.2" width="690.6" height="476.3" id="SVGID_00000172426431205861892010000007848701560932603821_">
+			<g style="filter:url(#Adobe_OpacityMaskFilter_00000065035079374415074920000016887735765079119527_);">
+				<g>
+					<defs>
+						<rect id="SVGID_00000110460658782098944250000007145127038068933045_" x="31" y="2.4" width="2445" height="777.9"/>
+					</defs>
+					<clipPath id="SVGID_00000125588242865020350380000012657501878310277305_">
+						<use xlink:href="#SVGID_00000110460658782098944250000007145127038068933045_"  style="overflow:visible;"/>
+					</clipPath>
+					<g style="clip-path:url(#SVGID_00000125588242865020350380000012657501878310277305_);">
+						
+							<image style="overflow:visible;" width="616" height="196" xlink:href="3FFBCFF2AE74C472.jpg"  transform="matrix(3.9691 0 0 3.9691 31.0322 2.369)">
+						</image>
+					</g>
+				</g>
+			</g>
+		</mask>
+		<g style="mask:url(#SVGID_00000172426431205861892010000007848701560932603821_);">
+			<g>
+				<defs>
+					<rect id="SVGID_00000047738280526120149320000013393712385546870959_" x="110.4" y="153.2" width="690.6" height="476.3"/>
+				</defs>
+				<clipPath id="SVGID_00000093855138658219736710000003086865952214330267_">
+					<use xlink:href="#SVGID_00000047738280526120149320000013393712385546870959_"  style="overflow:visible;"/>
+				</clipPath>
+				
+					<rect x="110.4" y="153.2" style="opacity:0.75;clip-path:url(#SVGID_00000093855138658219736710000003086865952214330267_);fill:#1D1D1B;" width="690.6" height="476.3"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<defs>
+				
+					<filter id="Adobe_OpacityMaskFilter_00000134239925175313160500000012058969698027088002_" filterUnits="userSpaceOnUse" x="757.6" y="153.9" width="607.3" height="488.2">
+					<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+				</filter>
+			</defs>
+			
+				<mask maskUnits="userSpaceOnUse" x="757.6" y="153.9" width="607.3" height="488.2" id="SVGID_00000093855480412049268360000006037586140635777678_">
+				<g style="filter:url(#Adobe_OpacityMaskFilter_00000134239925175313160500000012058969698027088002_);">
+					<g>
+						<defs>
+							<rect id="SVGID_00000111166605119712860280000004506126948439968155_" x="638.6" y="-0.9" width="2492.6" height="762.1"/>
+						</defs>
+						<clipPath id="SVGID_00000019648875088505100860000016224754888744978360_">
+							<use xlink:href="#SVGID_00000111166605119712860280000004506126948439968155_"  style="overflow:visible;"/>
+						</clipPath>
+						<g style="clip-path:url(#SVGID_00000019648875088505100860000016224754888744978360_);">
+							
+								<image style="overflow:visible;" width="628" height="192" xlink:href="3FFBCFF2AE74C473.jpg"  transform="matrix(3.9691 0 0 3.9691 638.5594 -0.8723)">
+							</image>
+						</g>
+					</g>
+				</g>
+			</mask>
+			<g style="mask:url(#SVGID_00000093855480412049268360000006037586140635777678_);">
+				<g>
+					<defs>
+						<rect id="SVGID_00000011740399418585623460000016694637475279744672_" x="757.6" y="153.9" width="607.3" height="488.2"/>
+					</defs>
+					<clipPath id="SVGID_00000080918682945780978510000016616314249370731678_">
+						<use xlink:href="#SVGID_00000011740399418585623460000016694637475279744672_"  style="overflow:visible;"/>
+					</clipPath>
+					
+						<rect x="757.6" y="153.9" style="opacity:0.75;clip-path:url(#SVGID_00000080918682945780978510000016616314249370731678_);fill:#1D1D1B;" width="607.3" height="488.2"/>
+				</g>
+			</g>
+		</g>
+	</g>
+	<text transform="matrix(1 0 0 1 143.9901 569.7272)"><tspan x="0" y="0" class="st28 st29 st30">D</tspan><tspan x="329" y="0" class="st28 st29 st31">roid</tspan></text>
+	<text transform="matrix(1 0 0 1 778.0237 569.7271)"><tspan x="0" y="0" class="st28 st29 st30">S</tspan><tspan x="216.5" y="0" class="st28 st29 st31">hash</tspan></text>
+</g>
 </svg>

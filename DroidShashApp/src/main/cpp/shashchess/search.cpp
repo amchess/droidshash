@@ -1,6 +1,6 @@
 /*
-  ShashChess, a UCI chess playing engine derived from ShashChess
-  Copyright (C) 2004-2021 The ShashChess developers (see AUTHORS file)
+  ShashChess, a UCI chess playing engine derived from Stockfish
+  Copyright (C) 2004-2021 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -533,7 +533,7 @@ void Thread::search() {
   {
   //from mcts end
     // Iterative deepening loop until requested to stop or the target depth is reached
-    int iterationDepth=(limitStrength && Limits.depth) ? handicapDepth:Limits.depth;//handicap mode
+    int iterationDepth=limitStrength ? handicapDepth:Limits.depth;//handicap mode
     while (   ++rootDepth < MAX_PLY
 	   && !Threads.stop
 	   && !(iterationDepth && mainThread && rootDepth > iterationDepth))
@@ -1671,10 +1671,9 @@ moves_loop: // When in check, search starts from here
       // cases where we extend a son if it has good chances to be "interesting".
       if ( doLMRStep &&   depth >= 3 &&  moveCount > sibs //full threads patch + Kelly
 	  &&  moveCount > 1 + 2 * rootNode
-          && (  !captureOrPromotion
-              || (cutNode && (ss-1)->moveCount > 1)
-              || !ss->ttPv)
-          && (!PvNode || ss->ply > 1 || thisThread->id() % 4 != 3))
+          && (   !ss->ttPv
+              || !captureOrPromotion
+              || (cutNode && (ss-1)->moveCount > 1)))
       {
           Depth r = reduction(improving, depth, moveCount, rangeReduction > 2);
 
@@ -1734,11 +1733,10 @@ moves_loop: // When in check, search starts from here
           // In general we want to cap the LMR depth search at newDepth. But if reductions
           // are really negative and movecount is low, we allow this move to be searched
           // deeper than the first move (this may lead to hidden double extensions).
-          int deeper =   r >= -1                   ? 0
-                       : moveCount <= 3            ? 2
-                       : moveCount <= 5            ? 1
-                       : PvNode && depth > 6       ? 1
-                       :                             0;
+          int deeper =   r >= -1             ? 0
+                       : moveCount <= 5      ? 2
+                       : PvNode && depth > 6 ? 1
+                       :                       0;
 
           Depth d = std::clamp(newDepth - r, 1, newDepth + deeper);
 
