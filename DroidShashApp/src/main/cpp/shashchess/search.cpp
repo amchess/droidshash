@@ -132,14 +132,22 @@ namespace {
     return thisThread->state;
   }
 
-  // Skill structure is used to implement strength limit
+  // Skill structure is used to implement strength limit. If we have an uci_elo then
+  // we convert it to a suitable fractional skill level using anchoring to CCRL Elo
+  // (goldfish 1.13 = 2000) and a fit through Ordo derived Elo for match (TC 60+0.6)
+  // results spanning a wide range of k values.
   struct Skill {
-    explicit Skill(int l) : level(l) {}
-    bool enabled() const { return level < 20; }
-    bool time_to_pick(Depth depth) const { return depth == 1 + level; }
+	Skill(int skill_level, int uci_elo) {
+        if (uci_elo)
+            level = std::clamp(std::pow((uci_elo - 1346.6) / 143.4, 1 / 0.806), 0.0, 20.0);
+        else
+            level = double(skill_level);
+    }
+    bool enabled() const { return level < 20.0; }
+    bool time_to_pick(Depth depth) const { return depth == 1 + int(level); }
     Move pick_best(size_t multiPV);
 
-    int level;
+    double level;
     Move best = MOVE_NONE;
   };
   bool limitStrength ;//from handicap mode
@@ -248,7 +256,7 @@ void MainThread::search() {
   petrosian=Options["Petrosian"];
   //end from Shashin
   //from handicap mode begin
-  uciElo=Options["UCI_LimitStrength"]?Options["UCI_Elo"]:Options["ELO_CB"];
+  uciElo=Options["UCI_LimitStrength"] ? Options["UCI_Elo"]:Options["ELO_CB"];
   handicapDepth=limitStrength ? round(0.604686101*exp(1.399511228*pow(10,-3)*uciElo)):0;
   pawnsToEvaluate = limitStrength ? (uciElo >= 2000):1;
   winnableToEvaluate= limitStrength ? (uciElo>=2200):1;
@@ -291,11 +299,11 @@ void MainThread::search() {
       Time.availableNodes += Limits.inc[us] - Threads.nodes_searched();
 
   Thread* bestThread = this;
+  Skill skill = Skill(skillLevel, (limitStrength) ? uciElo : 0);
 
   if (   int(Options["MultiPV"]) == 1
       && !Limits.depth
-      && !(int(Options["UCI_LimitStrength"]))
-	  && !(int(Options["LimitStrength_CB"]))
+	  && !skill.enabled()
       && rootMoves[0].pv[0] != MOVE_NONE)
       bestThread = Threads.get_best_thread();
 
@@ -478,18 +486,7 @@ void Thread::search() {
 
   size_t multiPV = size_t(Options["MultiPV"]);
 
-  // Pick integer skill levels, but non-deterministically round up or down
-  // such that the average integer skill corresponds to the input floating point one.
-  // UCI_Elo is converted to a suitable fractional skill level, using anchoring
-  // to CCRL Elo (goldfish 1.13 = 2000) and a fit through Ordo derived Elo
-  // for match (TC 60+0.6) results spanning a wide range of k values.
-  PRNG rng(now());
-  double floatLevel = limitStrength ?
-                        std::clamp(std::pow((uciElo - 1346.6) / 143.4, 1 / 0.806), 0.0, 20.0) :
-                        double(skillLevel);
-  int intLevel = int(floatLevel) +
-                 ((floatLevel - int(floatLevel)) * 1024 > rng.rand<unsigned>() % 1024  ? 1 : 0);
-  Skill skill(intLevel);
+  Skill skill(skillLevel, limitStrength ? uciElo : 0);
 
   // When playing with strength handicap enable MultiPV search that we will
   // use behind the scenes to retrieve a set of possible moves.
@@ -576,7 +573,7 @@ void Thread::search() {
 	    if (rootDepth >= 4)
 	    {
 			Value prev = rootMoves[pvIdx].previousScore;
-			delta = Value(13 + 4 * failedAspirationsPrevID);//aspiration patch 
+			delta = Value(13 + 4 * failedAspirationsPrevID)+ int(prev) * prev / 16384;//aspiration patch 
 			alpha = std::max(prev - delta,-VALUE_INFINITE);
 			beta  = std::min(prev + delta, VALUE_INFINITE);
 			updateShashinValues(rootPos,prev);//from ShashChess
@@ -798,7 +795,7 @@ namespace {
     bool givesCheck, improving, didLMR, priorCapture, expTTHit=false, isMate; //from Crystal
     //from Kelly End
     bool captureOrPromotion, doFullDepthSearch, moveCountPruning, 
-		 ttCapture, singularQuietLMR, noLMRExtension, kingDanger; //from Crystal + official from Shashin
+		 ttCapture, singularQuietLMR, kingDanger; //from Crystal + official from Shashin
 
     Piece movedPiece;
     int moveCount, captureCount, quietCount, bestMoveCount, improvement=0, rootDepth; //from Crystal
@@ -1199,7 +1196,7 @@ namespace {
         && (ss-1)->statScore < 23767
         &&  eval >= beta
         &&  eval >= ss->staticEval
-		&&  ss->staticEval >= beta - 20 * depth - 22 * improving + 168 * ss->ttPv + 177 //official by Shashin
+		&&  ss->staticEval >= beta - 20 * depth - improvement / 15 + 204
     &&  pos.non_pawn_material(us)
 	&& ((pos.this_thread()->shashinQuiescentCapablancaMaxScore)||(!gameCycle)) //from Crystal
 	&&  !disableNMAndPC //Kelly
@@ -1375,7 +1372,7 @@ moves_loop: // When in check, search starts from here
                                       ss->ply);
 
     value = bestValue;
-    singularQuietLMR = moveCountPruning = noLMRExtension = false;
+    singularQuietLMR = moveCountPruning = false;
 
     // Indicate PvNodes that will probably fail low if the node was searched
     // at a depth equal or greater than the current depth, and the result of this search was a fail low.
@@ -1530,7 +1527,7 @@ moves_loop: // When in check, search starts from here
       // a reduced search on all the other moves but the ttMove and if the
       // result is lower than ttValue minus a margin, then we will extend the ttMove.
       if (   !rootNode
-          &&  depth >= 7
+		  &&  depth >= 6 + ((pos.this_thread()->shashinQuiescentCapablancaMiddleHighScore) ? (2 * PvNode):1) //pnSepExtRe3
           &&  move == ttMove
           && !excludedMove // Avoid recursive singular search
        /* &&  ttValue != VALUE_NONE Already implicit in the next condition */
@@ -1539,7 +1536,7 @@ moves_loop: // When in check, search starts from here
           &&  tte->depth() >= depth - 3)
       {
           Value singularBeta = ttValue - 3 * depth;
-          Depth singularDepth = (depth - 1) / 2;
+          Depth singularDepth = (depth - 1 +((pos.this_thread()->shashinQuiescentCapablancaMiddleHighScore) ? (2 * PvNode):0)) / 2; //pnSepExtRe3
 
           ss->excludedMove = move;
           value = search<NonPV>(pos, ss, singularBeta - 1, singularBeta, singularDepth, cutNode, mcts);//mcts
@@ -1554,10 +1551,7 @@ moves_loop: // When in check, search starts from here
               if (   !PvNode
                   && value < singularBeta - 75
                   && ss->doubleExtensions <= 6)
-              {
                   extension = 2;
-                  noLMRExtension = true;
-              }
           }
 
           // Multi-cut pruning
@@ -1721,6 +1715,8 @@ moves_loop: // When in check, search starts from here
           if (ttCapture && (pos.this_thread()->shashinQuiescentCapablancaMaxScore))
               r++;
 
+		  bool noLMRExtension1 = thisThread->counterMoves[movedPiece][to_sq(move)] == (ss+1)->killers[0];//cmKill0Reply2
+
           ss->statScore =  thisThread->mainHistory[us][from_to(move)]
                          + (*contHist[0])[movedPiece][to_sq(move)]
                          + (*contHist[1])[movedPiece][to_sq(move)]
@@ -1733,10 +1729,11 @@ moves_loop: // When in check, search starts from here
           // In general we want to cap the LMR depth search at newDepth. But if reductions
           // are really negative and movecount is low, we allow this move to be searched
           // deeper than the first move (this may lead to hidden double extensions).
-          int deeper =   r >= -1             ? 0
-                       : moveCount <= 5      ? 2
-                       : PvNode && depth > 6 ? 1
-                       :                       0;
+          int deeper =   ((r >= -1)||(noLMRExtension1 && (pos.this_thread()->shashinQuiescentCapablancaMiddleHighScore))) ? 0
+                       : moveCount <= 5            																		? 2
+                       : PvNode && depth > 6       																		? 1
+                       : cutNode && moveCount <= 7 																		? 1
+                       :                             																	0;
 
           Depth d = std::clamp(newDepth - r, 1, newDepth + deeper);
 
@@ -1763,7 +1760,7 @@ moves_loop: // When in check, search starts from here
           // If the move passed LMR update its stats
           if (didLMR && !captureOrPromotion)
           {
-              int bonus = value > alpha ?  stat_bonus(newDepth + noLMRExtension)
+              int bonus = value > alpha ?  stat_bonus(newDepth)
                                         : -stat_bonus(newDepth);
 
               update_continuation_histories(ss, movedPiece, to_sq(move), bonus);
@@ -2362,7 +2359,7 @@ moves_loop: // When in check, search starts from here
     // RootMoves are already sorted by score in descending order
     Value topScore = rootMoves[0].score;
     int delta = std::min(topScore - rootMoves[multiPV - 1].score, PawnValueMg);
-    int weakness = 120 - 2 * level;
+    double weakness = 120 - 2 * level;
     int maxScore = -VALUE_INFINITE;
 
     // Choose best move. For each move score we add two terms, both dependent on
@@ -2371,8 +2368,8 @@ moves_loop: // When in check, search starts from here
     for (size_t i = 0; i < multiPV; ++i)
     {
         // This is our magic formula
-        int push = (  weakness * int(topScore - rootMoves[i].score)
-                    + delta * (rng.rand<unsigned>() % weakness)) / 128;
+        int push = int((  weakness * int(topScore - rootMoves[i].score)
+                        + delta * (rng.rand<unsigned>() % int(weakness))) / 128);
 
         if (rootMoves[i].score + push >= maxScore)
         {
