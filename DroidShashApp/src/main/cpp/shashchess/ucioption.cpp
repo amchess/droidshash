@@ -48,6 +48,8 @@ void on_persisted_learning(const Option& o) { if (!(o == "Off")){ setUsePersiste
 void on_tb_path(const Option& o) { Tablebases::init(o); }
 void on_use_NNUE(const Option& ) { Eval::NNUE::init(); }
 void on_eval_file(const Option& ) { Eval::NNUE::init(); }
+void on_UCI_LimitStrength(const Option& ) { Eval::NNUE::init(); }
+void on_LimitStrength_CB(const Option& ) { Eval::NNUE::init(); }
 
 /// Our case insensitive less() function as required by UCI protocol
 bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const {
@@ -73,8 +75,8 @@ void init(OptionsMap& o) {
   o["Slow Mover"]            	   << Option(100, 10, 1000);
   o["UCI_Chess960"]          	   << Option(false);
   o["UCI_AnalyseMode"]       	   << Option(false);
-  o["UCI_LimitStrength"]     	   << Option(false);
-  o["LimitStrength_CB"]        << Option(false);
+  o["UCI_LimitStrength"]     	   << Option(false, on_UCI_LimitStrength);
+  o["LimitStrength_CB"]        << Option(false,on_LimitStrength_CB);
   o["UCI_Elo"]                     << Option(2850, 1350, 2850);//handicap mode from ShashChess 
   o["ELO_CB"]                  << Option(2850, 1350, 2850);//handicap mode from ShashChess 
   o["UCI_ShowWDL"]           << Option(false);
