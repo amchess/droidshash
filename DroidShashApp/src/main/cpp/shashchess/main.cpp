@@ -28,7 +28,7 @@
 #include "thread.h"
 #include "learn.h"
 #include "uci.h"
-
+#include "polybook.h" //cerebellum
 using namespace ShashChess;
 
 int main(int argc, char* argv[]) {
@@ -40,11 +40,7 @@ int main(int argc, char* argv[]) {
   UCI::init(Options);
   Tune::init();
   //from Kelly begin
-  setUsePersistedLearning();
-  if (usePersistedLearning != PersistedLearningUsage::Off)
-  {
-  	LD.init();
-  }
+  LD.init();
   //from Kelly end
   PSQT::init();
   Bitboards::init();
@@ -53,6 +49,10 @@ int main(int argc, char* argv[]) {
   Endgames::init();
   Threads.set(size_t(Options["Threads"]));
   Threads.setFull(Options["Full depth threads"]);//Full threads patch
+  //cerebellum begin
+  polybook.init(Options["BookFile"]);
+  polybook2.init(Options["BookFile2"]);
+  //cerebellum end
   Search::clear(); // After threads are up
   Eval::NNUE::init();
 
