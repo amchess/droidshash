@@ -41,8 +41,9 @@
 
 namespace ShashChess {
 bool pawnsToEvaluate, winnableToEvaluate, imbalancesToEvaluate; //from Shashin Handicap mode
-//kelly begin
-bool useLearning = false;
+//Kelly begin
+bool useLearning = true;
+bool enabledLearningProbe=false;
 std::vector<PersistedLearningMove> gameLine;
 //Kelly end
 
@@ -252,6 +253,10 @@ void MainThread::search() {
   Color us = rootPos.side_to_move();
   Time.init(Limits, us, rootPos.game_ply());
   TT.new_search();
+  //Kelly begin
+  enabledLearningProbe = false;
+  useLearning = true;
+  //Kelly end
 
   openingVariety = Options["Opening variety"];//from Sugar
   Eval::NNUE::verify();
@@ -336,33 +341,34 @@ void MainThread::search() {
   bestPreviousScore = bestThread->rootMoves[0].score;
 
   //kelly begin
-  if (LD.is_enabled())
+  if (bestThread->completedDepth > 4 && LD.is_enabled() && !LD.is_paused())// from Khalid
   {
-      if (bestThread->completedDepth > 4 && !LD.is_paused() && !LD.is_readonly())// from Khalid
+      PersistedLearningMove plm;
+      plm.key = rootPos.key();
+      plm.learningMove.depth = bestThread->completedDepth;
+      plm.learningMove.move = bestThread->rootMoves[0].pv[0];
+      plm.learningMove.score = bestThread->rootMoves[0].score;
+
+      if (LD.learning_mode() == LearningMode::Self)
       {
-          PersistedLearningMove plm;
-          plm.key = rootPos.key();
-          plm.learningMove.depth = bestThread->completedDepth;
-          plm.learningMove.move = bestThread->rootMoves[0].pv[0];
-          plm.learningMove.score = bestThread->rootMoves[0].score;
+          const LearningMove* existingMove = LD.probe_move(plm.key, plm.learningMove.move);
 
-          if (LD.learning_mode() == LearningMode::Self)
-          {
-              const LearningMove* existingMove = LD.probe_move(plm.key, plm.learningMove.move);
+          if (existingMove)
+              plm.learningMove.score = existingMove->score;
 
-              if (existingMove)
-                  plm.learningMove.score = existingMove->score;
-
-              gameLine.push_back(plm);
-          }
-          else
-          {
-              LD.add_new_learning(plm.key, plm.learningMove);
-          }
+          gameLine.push_back(plm);
+      }
+      else
+      {
+          LD.add_new_learning(plm.key, plm.learningMove);
       }
   }
-  //kelly end
-
+  if (!enabledLearningProbe)
+  {
+      useLearning = false;
+  }
+  //Kelly end
+  
   // Send again PV info if we have a new best thread
   if (bestThread != this)
       sync_cout << UCI::pv(bestThread->rootPos, bestThread->completedDepth, -VALUE_INFINITE, VALUE_INFINITE) << sync_endl;
@@ -374,16 +380,19 @@ void MainThread::search() {
 
   std::cout << sync_endl;
 
-  //Kelly Khalid begin
-  //Save learning data if game is decided already
-  if (LD.is_enabled() && (Utility::is_game_decided(rootPos, bestThread->rootMoves[0].score)) && !LD.is_readonly())
+  //from Khalid begin
+  //Save learning data if game is already decided
+  if (Utility::is_game_decided(rootPos, bestThread->rootMoves[0].score) && LD.is_enabled() && !LD.is_paused())
   {
       //Perform Q-learning if enabled
-      if (LD.learning_mode() == LearningMode::Self)
+      if(LD.learning_mode() == LearningMode::Self)
           putGameLineIntoLearningTable();
 
       //Save to learning file
-      LD.persist();
+	  if(!LD.is_readonly())
+	  {
+	  	LD.persist();
+	  }
 
       //Stop learning until we receive *ucinewgame* command
       LD.pause();
@@ -978,18 +987,19 @@ namespace {
             return ttValue;
     }
     //from Kelly begin
-    if (LD.is_enabled() && !excludedMove)
-    {
-        //Step 4Bis. Global Learning Table lookup
-        expTTHit = false;
-        updatedLearning = false;
+    //Step 4Bis. Global Learning Table lookup
+    expTTHit = false;
+    updatedLearning = false;
 
-        const LearningMove* learningMove = nullptr;
+    if (!excludedMove && LD.is_enabled()&& useLearning)
+    {
+        const LearningMove *learningMove = nullptr;
         sibs = LD.probe(posKey, learningMove);
         if (learningMove)
         {
             assert(sibs);
 
+            enabledLearningProbe = true;
             expTTHit = true;
             if (!ttMove)
             {
@@ -1021,7 +1031,7 @@ namespace {
 
             // At non-PV nodes we check for an early Global Learning Table cutoff
             // If expTTMove is quiet, update move sorting heuristics on global learning table hit
-            if (   !PvNode
+            if (!PvNode
                 && updatedLearning
                 && expTTValue != VALUE_NONE // Possible in case of Global Learning Table access race
                 && (learningMove->depth >= depth))
