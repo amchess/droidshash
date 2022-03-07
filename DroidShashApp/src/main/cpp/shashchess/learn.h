@@ -32,6 +32,7 @@ private:
     bool isReadOnly;
     bool needPersisting;
     LearningMode learningMode;
+
     std::unordered_multimap<ShashChess::Key, LearningMove*> HT;
     std::vector<void*> mainDataBuffers;
     std::vector<void*> newMovesDataBuffers;
@@ -59,7 +60,7 @@ public:
     void init();
     void persist();
 
-    void add_new_learning(ShashChess::Key key, const LearningMove &lm);
+	void add_new_learning(ShashChess::Key key, const LearningMove &lm);
 
     int probe(ShashChess::Key key, const LearningMove*& learningMove);
     const LearningMove *probe_move(ShashChess::Key key, ShashChess::Move move);

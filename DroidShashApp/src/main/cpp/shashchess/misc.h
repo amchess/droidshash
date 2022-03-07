@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2021 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -113,6 +113,9 @@ class RunningAverage {
       bool is_greater(int64_t a, int64_t b)
         { return b * average > a * PERIOD * RESOLUTION ; }
 
+      int64_t value()
+        { return average / (PERIOD * RESOLUTION); }
+
   private :
       static constexpr int64_t PERIOD     = 4096;
       static constexpr int64_t RESOLUTION = 1024;
@@ -146,13 +149,41 @@ private:
   std::size_t size_ = 0;
 };
 
+//begin khalid from learner
 namespace Utility {
-  //begin khalid from learner
+
   void init(const char *arg0);
   std::string map_path(const std::string& path);
   bool is_game_decided(const Position &pos, Value lastScore);
-  //end khalid from learner
 }
+//end khalid from learner
+
+/// sigmoid(t, x0, y0, C, P, Q) implements a sigmoid-like function using only integers,
+/// with the following properties:
+///
+///  -  sigmoid is centered in (x0, y0)
+///  -  sigmoid has amplitude [-P/Q , P/Q] instead of [-1 , +1]
+///  -  limit is (y0 - P/Q) when t tends to -infinity
+///  -  limit is (y0 + P/Q) when t tends to +infinity
+///  -  the slope can be adjusted using C > 0, smaller C giving a steeper sigmoid
+///  -  the slope of the sigmoid when t = x0 is P/(Q*C)
+///  -  sigmoid is increasing with t when P > 0 and Q > 0
+///  -  to get a decreasing sigmoid, call with -t, or change sign of P
+///  -  mean value of the sigmoid is y0
+///
+/// Use <https://www.desmos.com/calculator/jhh83sqq92> to draw the sigmoid
+
+inline int64_t sigmoid(int64_t t, int64_t x0,
+                                  int64_t y0,
+                                  int64_t  C,
+                                  int64_t  P,
+                                  int64_t  Q)
+{
+   assert(C > 0);
+   return y0 + P * (t-x0) / (Q * (std::abs(t-x0) + C)) ;
+}
+
+
 /// xorshift64star Pseudo-Random Number Generator
 /// This class is based on original code written and dedicated
 /// to the public domain by Sebastiano Vigna (2014).

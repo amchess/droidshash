@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2021 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -68,7 +68,6 @@ namespace {
     { V( -8), V(  51), V( 167), V( 35), V( -4), V(-16), V(-12) },
     { V(-17), V( -13), V( 100), V(  4), V(  9), V(-16), V(-31) }
   };
-
 
   // KingOnFile[semi-open Us][semi-open Them] contains bonuses/penalties
   // for king when the king is on a semi-open or open file.
@@ -200,7 +199,6 @@ namespace {
 } // namespace
 
 namespace Pawns {
-
 
 /// Pawns::probe() looks up the current position's pawns configuration in
 /// the pawns hash table. It returns a pointer to the Entry if the position

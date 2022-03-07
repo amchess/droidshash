@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2021 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -39,9 +39,7 @@ int main(int argc, char* argv[]) {
   Utility::init(argv[0]); //Khalid
   UCI::init(Options);
   Tune::init();
-  //from Kelly begin
-  LD.init();
-  //from Kelly end
+  LD.init();//Kelly
   PSQT::init();
   Bitboards::init();
   Position::init();

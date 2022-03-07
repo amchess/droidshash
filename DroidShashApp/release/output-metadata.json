@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "org.amchess.droidshash",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 96,
+      "versionName": "1.00",
+      "outputFile": "DroidShashApp-release.apk"
+    }
+  ],
+  "elementType": "File"
+}
