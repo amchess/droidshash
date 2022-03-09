@@ -262,6 +262,7 @@ void MainThread::search() {
   imbalancesToEvaluate = limitStrength ? (uciElo>=2400):1;
   //skillLevel= ((int)((uciElo-1350)/75)); //from true handicap mode
   //end from handicap mode
+  Move bookMove = MOVE_NONE;
 
   if (rootMoves.empty())
   {
@@ -273,13 +274,15 @@ void MainThread::search() {
   //Books management begin
   else
   {
-      Move bookMove = MOVE_NONE;
-      if(!Limits.infinite && !Limits.mate)
+      if (!Limits.infinite && !Limits.mate)
       {
-	  bookMove = polybook.probe(rootPos);
-          if (!bookMove)
-              bookMove = polybook2.probe(rootPos);
-      }
+         //Check polyglot books first
+          if ((bool)Options["Book1"] && rootPos.game_ply() / 2 < (int)Options["Book1 Depth"])
+              bookMove = polybook[0].probe(rootPos, (bool)Options["Book1 BestBookMove"]);
+
+          if(bookMove == MOVE_NONE && (bool)Options["Book2"] && rootPos.game_ply() / 2 < (int)Options["Book2 Depth"])
+              bookMove = polybook[1].probe(rootPos, (bool)Options["Book1 BestBookMove"]);
+	  }
       if (bookMove && std::count(rootMoves.begin(), rootMoves.end(), bookMove))
       {
           for (Thread* th : Threads)

@@ -53,10 +53,8 @@ void on_eval_file(const Option& ) { Eval::NNUE::init(); }
 void on_UCI_LimitStrength(const Option& ) { Eval::NNUE::init(); }
 void on_LimitStrength_CB(const Option& ) { Eval::NNUE::init(); }
 //cerebellum+book begin
-void on_book_file(const Option& o) { polybook.init(o); }
-void on_book_file2(const Option& o) { polybook2.init(o); }
-void on_best_book_move(const Option& o) { polybook.set_best_book_move(o); }
-void on_book_depth(const Option& o) { polybook.set_book_depth(o); }
+void on_book1_file(const Option& o) { polybook[0].init(o); }
+void on_book2_file(const Option& o) { polybook[1].init(o); }
 //cerebellum+book end
 
 /// Our case insensitive less() function as required by UCI protocol
@@ -97,10 +95,15 @@ void init(OptionsMap& o) {
   // for the build process (profile-build and fishtest) to work.
   o["EvalFile"]              << Option(EvalFileDefaultName, on_eval_file);
   //cerebellum book begin
-  o["BookFile"]              << Option("<empty>", on_book_file);
-  o["BookFile2"]             << Option("<empty>", on_book_file2);
-  o["BestBookMove"]          << Option(true, on_best_book_move);
-  o["BookDepth"]             << Option(255, 1, 255, on_book_depth);
+  o["Book1"]                             << Option(false);
+  o["Book1 File"]                        << Option("<empty>", on_book1_file);
+  o["Book1 BestBookMove"]                << Option(true);
+  o["Book1 Depth"]                       << Option(100, 1, 350);
+						 
+  o["Book2"]                             << Option(false);
+  o["Book2 File"]                        << Option("<empty>", on_book2_file);
+  o["Book2 BestBookMove"]                << Option(true);
+  o["Book2 Depth"]                       << Option(100, 1, 350);
   //cerebellum book end  
   o["Full depth threads"]    << Option(0, 0, 512, on_full_threads); //if this is used, must be after #Threads is set.
   o["Opening variety"]       << Option (0, 0, 40);
