@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -104,17 +104,11 @@ constexpr bool Is64Bit = true;
 constexpr bool Is64Bit = false;
 #endif
 
-typedef uint64_t Key;
-typedef uint64_t Bitboard;
+using Key = uint64_t;
+using Bitboard = uint64_t;
 
 constexpr int MAX_MOVES = 256;
 constexpr int MAX_PLY   = 246;
-
-//align score begin
-constexpr float CAOS_MAX_EVAL = 71.;
-constexpr float GUI_CAOS_EVAL = 32.;
-constexpr float WEIGHTED_EVAL=CAOS_MAX_EVAL/GUI_CAOS_EVAL;
-//align score end
 
 /// A move needs 16 bits to be stored
 ///
@@ -144,7 +138,7 @@ enum Color {
   WHITE, BLACK, COLOR_NB = 2
 };
 
-constexpr Color Colors[2] = { WHITE, BLACK };
+constexpr Color Colors[2] = {WHITE, BLACK};//kelly
 
 enum CastlingRights {
   NO_CASTLING,
@@ -195,6 +189,9 @@ enum Value : int {
   VALUE_MATE_IN_MAX_PLY  =  VALUE_MATE - MAX_PLY,
   VALUE_MATED_IN_MAX_PLY = -VALUE_MATE_IN_MAX_PLY,
 
+  // In the code, we make the assumption that these values
+  // are such that non_pawn_material() can be used to uniquely
+  // identify the material on the board.
   PawnValueMg   = 126,   PawnValueEg   = 208,
   KnightValueMg = 781,   KnightValueEg = 854,
   BishopValueMg = 825,   BishopValueEg = 915,
@@ -224,7 +221,7 @@ constexpr Value PieceValue[PHASE_NB][PIECE_NB] = {
     VALUE_ZERO, PawnValueEg, KnightValueEg, BishopValueEg, RookValueEg, QueenValueEg, VALUE_ZERO, VALUE_ZERO }
 };
 
-typedef int Depth;
+using Depth = int;
 
 enum : int {
   DEPTH_QS_CHECKS     =  0,
@@ -287,18 +284,43 @@ struct DirtyPiece {
   Square to[3];
 };
 
-//Shashin section
-enum {
-  SHASHIN_MAX_SCORE = 139 * PawnValueEg/100, SHASHIN_MIDDLE_HIGH_SCORE = 69 * PawnValueEg/100, SHASHIN_MIDDLE_LOW_SCORE=25 * PawnValueEg/100};
-//Positions-algorithms types
-enum {
-  SHASHIN_POSITION_DEFAULT, SHASHIN_POSITION_PETROSIAN, SHASHIN_POSITION_CAPABLANCA, SHASHIN_POSITION_CAPABLANCA_PETROSIAN,
-  SHASHIN_POSITION_TAL,SHASHIN_POSITION_TAL_PETROSIAN,SHASHIN_POSITION_TAL_CAPABLANCA,SHASHIN_POSITION_TAL_CAPABLANCA_PETROSIAN
+// Shashin section
+// Positions-algorithms types
+enum
+{
+  SHASHIN_POSITION_TAL_CAPABLANCA_PETROSIAN=7,
+  SHASHIN_POSITION_HIGH_PETROSIAN=-6,
+  SHASHIN_POSITION_MIDDLE_HIGH_PETROSIAN=-5,
+  SHASHIN_POSITION_MIDDLE_PETROSIAN=-4,
+  SHASHIN_POSITION_MIDDLE_LOW_PETROSIAN=-3,
+  SHASHIN_POSITION_LOW_PETROSIAN=-2,
+  SHASHIN_POSITION_CAPABLANCA_PETROSIAN=-1,
+  SHASHIN_POSITION_CAPABLANCA=0,
+  SHASHIN_POSITION_CAPABLANCA_TAL=1,
+  SHASHIN_POSITION_LOW_TAL=2,
+  SHASHIN_POSITION_MIDDLE_LOW_TAL=3,
+  SHASHIN_POSITION_MIDDLE_TAL=4,
+  SHASHIN_POSITION_MIDDLE_HIGH_TAL=5,
+  SHASHIN_POSITION_HIGH_TAL=6
 };
-enum { SHASHIN_TAL_THRESHOLD = 35 * PawnValueEg/100, SHASHIN_CAPABLANCA_THRESHOLD = 15 * PawnValueEg/100};
+enum
+{
+  SHASHIN_LOW_TAL_THRESHOLD = 76,
+  SHASHIN_MIDDLE_LOW_TAL_THRESHOLD = 81,
+  SHASHIN_MIDDLE_TAL_THRESHOLD = 88,
+  SHASHIN_MIDDLE_HIGH_TAL_THRESHOLD = 91,
+  SHASHIN_HIGH_TAL_THRESHOLD = 96,
+  SHASHIN_CAPABLANCA_THRESHOLD = 51,
+  SHASHIN_LOW_PETROSIAN_THRESHOLD = 100-SHASHIN_LOW_TAL_THRESHOLD,
+  SHASHIN_MIDDLE_LOW_PETROSIAN_THRESHOLD = 100-SHASHIN_MIDDLE_LOW_TAL_THRESHOLD,
+  SHASHIN_MIDDLE_PETROSIAN_THRESHOLD = 100-SHASHIN_MIDDLE_TAL_THRESHOLD,
+  SHASHIN_MIDDLE_HIGH_PETROSIAN_THRESHOLD = 100-SHASHIN_MIDDLE_HIGH_TAL_THRESHOLD,
+  SHASHIN_HIGH_PETROSIAN_THRESHOLD = 100-SHASHIN_HIGH_TAL_THRESHOLD,
 
-//End Shashin section
 
+};
+
+// End Shashin section
 
 /// Score enum stores a middlegame and an endgame value in a single integer (enum).
 /// The least significant 16 bits are used to store the middlegame value and the
@@ -435,6 +457,10 @@ inline Color color_of(Piece pc) {
   return Color(pc >> 3);
 }
 
+constexpr bool is_ok(Move m) {
+  return m != MOVE_NONE && m != MOVE_NULL;
+}
+
 constexpr bool is_ok(Square s) {
   return s >= SQ_A1 && s <= SQ_H8;
 }
@@ -464,15 +490,17 @@ constexpr Direction pawn_push(Color c) {
 }
 
 constexpr Square from_sq(Move m) {
+  assert(is_ok(m));
   return Square((m >> 6) & 0x3F);
 }
 
 constexpr Square to_sq(Move m) {
+  assert(is_ok(m));
   return Square(m & 0x3F);
 }
 
 constexpr int from_to(Move m) {
- return m & 0xFFF;
+  return m & 0xFFF;
 }
 
 constexpr MoveType type_of(Move m) {
@@ -490,10 +518,6 @@ constexpr Move make_move(Square from, Square to) {
 template<MoveType T>
 constexpr Move make(Square from, Square to, PieceType pt = KNIGHT) {
   return Move(T + ((pt - KNIGHT) << 12) + (from << 6) + to);
-}
-
-constexpr bool is_ok(Move m) {
-  return from_sq(m) != to_sq(m); // Catch MOVE_NULL and MOVE_NONE
 }
 
 /// Based on a congruential pseudo random number generator

@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,9 +31,6 @@ class Position;
 
 namespace Search {
 
-/// Threshold used for countermoves based pruning
-constexpr int CounterMovePruneThreshold = 0;
-
 
 /// Stack struct keeps track of the information we need to remember from nodes
 /// shallower and deeper in the tree during the search. Each search thread has
@@ -47,14 +44,14 @@ struct Stack {
   Move excludedMove;
   Move killers[2];
   Value staticEval;
-  Depth depth;
   int statScore;
   int moveCount;
-  int distanceFromPv;//from Shashin
   bool inCheck;
   bool ttPv;
   bool ttHit;
+  bool secondaryLine; //from Crystal
   int doubleExtensions;
+  int cutoffCnt;
 };
 
 
@@ -75,13 +72,16 @@ struct RootMove {
   Value score = -VALUE_INFINITE;
   Value previousScore = -VALUE_INFINITE;
   Value averageScore = -VALUE_INFINITE;
+  Value uciScore = -VALUE_INFINITE;
+  bool scoreLowerbound = false;
+  bool scoreUpperbound = false;
   int selDepth = 0;
   int tbRank = 0;
   Value tbScore;
   std::vector<Move> pv;
 };
 
-typedef std::vector<RootMove> RootMoves;
+using RootMoves = std::vector<RootMove>;
 
 
 /// LimitsType struct stores information sent by GUI about available time to
@@ -110,12 +110,23 @@ extern LimitsType Limits;
 void init();
 void clear();
 
+//livebook begin
+#ifdef USE_LIVEBOOK
+void setLiveBookURL(const std::string &newURL);
+void setLiveBookTimeout(size_t newTimeoutMS);
+void set_livebook_retry(int retry);
+void set_livebook_depth(int book_depth);
+#endif
+//livebook end
 
 } // namespace Search
 //from Montecarlo begin
 Value minimax_value(Position& pos, Search::Stack* ss, Depth depth);
 Value minimax_value(Position& pos, Search::Stack* ss, Depth depth, Value alpha, Value beta);
 //from Montecarlo end
+#ifdef USE_LIVEBOOK
+size_t cURL_WriteFunc(void *contents, size_t size, size_t nmemb, std::string *s);
+#endif
 } // namespace ShashChess
 
 #endif // #ifndef SEARCH_H_INCLUDED

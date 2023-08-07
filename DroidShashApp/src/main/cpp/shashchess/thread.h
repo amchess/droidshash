@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -56,17 +56,17 @@ public:
   void start_searching();
   void wait_for_search_finished();
   size_t id() const { return idx; }
+  bool is_mcts() const { return isMCTS; } //montecarlo
 
   Pawns::Table pawnsTable;
   Material::Table materialTable;
   size_t pvIdx, pvLast;
-  RunningAverage complexityAverage;
-  RunningAverage lmrAverage;//lmr_average2
-  std::atomic<uint64_t> nodes, tbHits, bestMoveChanges, bestMoveMc;//bmMovecountR7
-  int selDepth, nmpMinPly;
-  Color nmpColor;
-  Value bestValue;//, optimism[COLOR_NB];
-
+  std::atomic<uint64_t> nodes, tbHits, bestMoveChanges;
+  int selDepth, nmpMinPly, nmpSide;//crystal
+  Value bestValue, optimism[COLOR_NB];
+  Value pvValue;//from Crystal
+  
+  bool nmpGuard,nmpGuardV; //from Crystal
   Position rootPos;
   StateInfo rootState;
   Search::RootMoves rootMoves;
@@ -76,12 +76,13 @@ public:
   ButterflyHistory mainHistory;
   CapturePieceToHistory captureHistory;
   ContinuationHistory continuationHistory[2][2];
-  //Score trend;
   bool fullSearch;//full threads patch
   //begin from Shashin
-  int shashinValue, shashinQuiescentCapablancaMiddleHighScore, shashinQuiescentCapablancaMaxScore;
+  int8_t shashinWinProbabilityRange=0;
   Key shashinPosKey;
+  int shashinPly=0;
   //end from Shashin
+  bool isMCTS; //from montecarlo
  };
 
 
@@ -108,14 +109,14 @@ struct MainThread : public Thread {
 /// parking and, most importantly, launching a thread. All the access to threads
 /// is done through this class.
 
-struct ThreadPool : public std::vector<Thread*> {
+struct ThreadPool {
 
   void start_thinking(Position&, StateListPtr&, const Search::LimitsType&, bool = false);
   void clear();
   void set(size_t);
   void setFull(size_t);//full threads patch
 
-  MainThread* main()        const { return static_cast<MainThread*>(front()); }
+  MainThread* main()        const { return static_cast<MainThread*>(threads.front()); }
   uint64_t nodes_searched() const { return accumulate(&Thread::nodes); }
   uint64_t tb_hits()        const { return accumulate(&Thread::tbHits); }
   Thread* get_best_thread() const;
@@ -124,35 +125,27 @@ struct ThreadPool : public std::vector<Thread*> {
 
   std::atomic_bool stop, increaseDepth;
 
+  auto cbegin() const noexcept { return threads.cbegin(); }
+  auto begin() noexcept { return threads.begin(); }
+  auto end() noexcept { return threads.end(); }
+  auto cend() const noexcept { return threads.cend(); }
+  auto size() const noexcept { return threads.size(); }
+  auto empty() const noexcept { return threads.empty(); }
+
 private:
   StateListPtr setupStates;
+  std::vector<Thread*> threads;
 
   uint64_t accumulate(std::atomic<uint64_t> Thread::* member) const {
 
     uint64_t sum = 0;
-    for (Thread* th : *this)
+    for (Thread* th : threads)
         sum += (th->*member).load(std::memory_order_relaxed);
     return sum;
   }
 };
 
 extern ThreadPool Threads;
-
-/// Spinlock class is a yielding spin-lock (compatible with hyperthreading machines)
-
-class Spinlock {
-  std::atomic_int lock;
-
-public:
-  Spinlock() { lock = 1; }                  // Init here to workaround a bug with MSVC 2013
-  Spinlock(const Spinlock&) { lock = 1; };
-  void acquire() {
-      while (lock.fetch_sub(1, std::memory_order_acquire) != 1)
-          while(lock.load(std::memory_order_relaxed) <= 0)
-              std::this_thread::yield();  // Be nice to hyperthreading
-  }
-  void release() { lock.store(1, std::memory_order_release); }
-};
 
 } // namespace ShashChess
 

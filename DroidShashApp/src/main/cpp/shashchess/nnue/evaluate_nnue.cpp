@@ -1,13 +1,13 @@
 /*
-  ShashChess, a UCI chess playing engine derived from Glaurung 2.1
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
-  ShashChess is free software: you can redistribute it and/or modify
+  Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  ShashChess is distributed in the hope that it will be useful,
+  Stockfish is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -18,15 +18,15 @@
 
 // Code for calculating NNUE evaluation function
 
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <set>
 #include <sstream>
-#include <iomanip>
-#include <fstream>
+#include <string_view>
 
 #include "../evaluate.h"
 #include "../position.h"
-#include "../misc.h"
 #include "../uci.h"
 #include "../types.h"
 
@@ -83,7 +83,7 @@ namespace ShashChess::Eval::NNUE {
   }  // namespace Detail
 
   // Initialize the evaluation function parameters
-  void initialize() {
+  static void initialize() {
 
     Detail::initialize(featureTransformer);
     for (std::size_t i = 0; i < LayerStacks; ++i)
@@ -91,7 +91,7 @@ namespace ShashChess::Eval::NNUE {
   }
 
   // Read network header
-  bool read_header(std::istream& stream, std::uint32_t* hashValue, std::string* desc)
+  static bool read_header(std::istream& stream, std::uint32_t* hashValue, std::string* desc)
   {
     std::uint32_t version, size;
 
@@ -105,7 +105,7 @@ namespace ShashChess::Eval::NNUE {
   }
 
   // Write network header
-  bool write_header(std::ostream& stream, std::uint32_t hashValue, const std::string& desc)
+  static bool write_header(std::ostream& stream, std::uint32_t hashValue, const std::string& desc)
   {
     write_little_endian<std::uint32_t>(stream, Version);
     write_little_endian<std::uint32_t>(stream, hashValue);
@@ -115,7 +115,7 @@ namespace ShashChess::Eval::NNUE {
   }
 
   // Read network parameters
-  bool read_parameters(std::istream& stream) {
+  static bool read_parameters(std::istream& stream) {
 
     std::uint32_t hashValue;
     if (!read_header(stream, &hashValue, &netDescription)) return false;
@@ -127,7 +127,7 @@ namespace ShashChess::Eval::NNUE {
   }
 
   // Write network parameters
-  bool write_parameters(std::ostream& stream) {
+  static bool write_parameters(std::ostream& stream) {
 
     if (!write_header(stream, HashValue, netDescription)) return false;
     if (!Detail::write_parameters(stream, *featureTransformer)) return false;
@@ -136,14 +136,19 @@ namespace ShashChess::Eval::NNUE {
     return (bool)stream;
   }
 
+  void hint_common_parent_position(const Position& pos) {
+    if (Eval::useNNUE)
+        featureTransformer->hint_common_access(pos);
+  }
+
   // Evaluation function. Perform differential calculation.
-  Value evaluate(const Position& pos, bool adjusted) {
+  Value evaluate(const Position& pos, bool adjusted, int* complexity) {
 
     // We manually align the arrays on the stack because with gcc < 9.3
     // overaligning stack variables with alignas() doesn't work correctly.
 
     constexpr uint64_t alignment = CacheLineSize;
-    int delta = 7;
+    constexpr int delta = 24;
 
 #if defined(ALIGNAS_ON_STACK_VARIABLES_BROKEN)
     TransformedFeatureType transformedFeaturesUnaligned[
@@ -161,9 +166,12 @@ namespace ShashChess::Eval::NNUE {
     const auto psqt = featureTransformer->transform(pos, transformedFeatures, bucket);
     const auto positional = network[bucket]->propagate(transformedFeatures);
 
+    if (complexity)
+        *complexity = abs(psqt - positional) / OutputScale;
+
     // Give more value to positional evaluation when adjusted flag is set
     if (adjusted)
-        return static_cast<Value>(((128 - delta) * psqt + (128 + delta) * positional) / 128 / OutputScale);
+        return static_cast<Value>(((1024 - delta) * psqt + (1024 + delta) * positional) / (1024 * OutputScale));
     else
         return static_cast<Value>((psqt + positional) / OutputScale);
   }
@@ -208,7 +216,7 @@ namespace ShashChess::Eval::NNUE {
     return t;
   }
 
-  static const std::string PieceToChar(" PNBRQK  pnbrqk");
+  constexpr std::string_view PieceToChar(" PNBRQK  pnbrqk");
 
 
   // format_cp_compact() converts a Value into (centi)pawns and writes it in a buffer.
@@ -217,7 +225,7 @@ namespace ShashChess::Eval::NNUE {
 
     buffer[0] = (v < 0 ? '-' : v > 0 ? '+' : ' ');
 
-    int cp = std::abs(100 * v / PawnValueEg);
+    int cp = std::abs(100 * v / UCI::NormalizeToPawnValue);
     if (cp >= 10000)
     {
         buffer[1] = '0' + cp / 10000; cp %= 10000;
@@ -242,14 +250,15 @@ namespace ShashChess::Eval::NNUE {
   }
 
 
-  // format_cp_aligned_dot() converts a Value into (centi)pawns and writes it in a buffer,
-  // always keeping two decimals. The buffer must have capacity for at least 7 chars.
-  static void format_cp_aligned_dot(Value v, char* buffer) {
+  // format_cp_aligned_dot() converts a Value into (centi)pawns, always keeping two decimals.
+  static void format_cp_aligned_dot(Value v, std::stringstream &stream) {
+    const double cp = 1.0 * std::abs(int(v)) / UCI::NormalizeToPawnValue;
 
-    buffer[0] = (v < 0 ? '-' : v > 0 ? '+' : ' ');
-
-    double cp = 1.0 * std::abs(int(v)) / PawnValueEg;
-    sprintf(&buffer[1], "%6.2f", cp);
+    stream << (v < 0 ? '-' : v > 0 ? '+' : ' ')
+           << std::setiosflags(std::ios::fixed)
+           << std::setw(6)
+           << std::setprecision(2)
+           << cp;
   }
 
 
@@ -329,17 +338,10 @@ namespace ShashChess::Eval::NNUE {
 
     for (std::size_t bucket = 0; bucket < LayerStacks; ++bucket)
     {
-      char buffer[3][8];
-      std::memset(buffer, '\0', sizeof(buffer));
-
-      format_cp_aligned_dot(t.psqt[bucket], buffer[0]);
-      format_cp_aligned_dot(t.positional[bucket], buffer[1]);
-      format_cp_aligned_dot(t.psqt[bucket] + t.positional[bucket], buffer[2]);
-
-      ss <<  "|  " << bucket    << "        "
-         << " |  " << buffer[0] << "  "
-         << " |  " << buffer[1] << "  "
-         << " |  " << buffer[2] << "  "
+      ss <<  "|  " << bucket    << "        ";
+      ss << " |  "; format_cp_aligned_dot(t.psqt[bucket], ss); ss << "  "
+         << " |  "; format_cp_aligned_dot(t.positional[bucket], ss); ss << "  "
+         << " |  "; format_cp_aligned_dot(t.psqt[bucket] + t.positional[bucket], ss); ss << "  "
          << " |";
       if (bucket == t.correctBucket)
           ss << " <-- this bucket is used";

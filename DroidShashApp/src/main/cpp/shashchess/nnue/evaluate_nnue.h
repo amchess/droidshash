@@ -1,13 +1,13 @@
 /*
-  ShashChess, a UCI chess playing engine derived from Glaurung 2.1
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
-  ShashChess is free software: you can redistribute it and/or modify
+  Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  ShashChess is distributed in the hope that it will be useful,
+  Stockfish is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -31,6 +31,7 @@ namespace ShashChess::Eval::NNUE {
   constexpr std::uint32_t HashValue =
       FeatureTransformer::get_hash_value() ^ Network::get_hash_value();
 
+
   // Deleter for automating release of memory area
   template <typename T>
   struct AlignedDeleter {
@@ -53,6 +54,14 @@ namespace ShashChess::Eval::NNUE {
 
   template <typename T>
   using LargePagePtr = std::unique_ptr<T, LargePageDeleter<T>>;
+
+  std::string trace(Position& pos);
+  Value evaluate(const Position& pos, bool adjusted = false, int* complexity = nullptr);
+  void hint_common_parent_position(const Position& pos);
+
+  bool load_eval(std::string name, std::istream& stream);
+  bool save_eval(std::ostream& stream);
+  bool save_eval(const std::optional<std::string>& filename);
 
 }  // namespace ShashChess::Eval::NNUE
 

@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,9 +26,10 @@
 #include "search.h"
 #include "syzygy/tbprobe.h"
 #include "thread.h"
+#include "tt.h"
 #include "learn.h"
 #include "uci.h"
-#include "polybook.h" //cerebellum
+#include "book/book.h"
 using namespace ShashChess;
 
 int main(int argc, char* argv[]) {
@@ -47,12 +48,9 @@ int main(int argc, char* argv[]) {
   Endgames::init();
   Threads.set(size_t(Options["Threads"]));
   Threads.setFull(Options["Full depth threads"]);//Full threads patch
-  //cerebellum begin
-  polybook[0].init(Options["Book1 File"]);
-  polybook[1].init(Options["Book2 File"]);
-  //cerebellum end
   Search::clear(); // After threads are up
   Eval::NNUE::init();
+  Book::init();//Books management
 
   UCI::loop(argc, argv);
 

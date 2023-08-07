@@ -2,9 +2,11 @@ LOCAL_PATH := $(call my-dir)
 
 SF_SRC_FILES := \
 	benchmark.cpp bitbase.cpp bitboard.cpp endgame.cpp evaluate.cpp learn.cpp main.cpp \
-	material.cpp misc.cpp mcts/montecarlo.cpp movegen.cpp movepick.cpp pawns.cpp polybook.cpp position.cpp psqt.cpp \
+	material.cpp misc.cpp movegen.cpp movepick.cpp pawns.cpp position.cpp psqt.cpp \
 	search.cpp thread.cpp timeman.cpp tt.cpp uci.cpp ucioption.cpp tune.cpp syzygy/tbprobe.cpp \
-	nnue/evaluate_nnue.cpp nnue/features/half_ka_v2_hm.cpp
+	mcts/montecarlo.cpp  \
+	nnue/evaluate_nnue.cpp nnue/features/half_ka_v2_hm.cpp \
+	book/book.cpp book/polyglot/polyglot.cpp book/ctg/ctg.cpp
 
 MY_ARCH_DEF :=
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)

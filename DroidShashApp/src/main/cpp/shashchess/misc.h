@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,8 +31,24 @@
 #ifndef _MSC_VER
 #include <mm_malloc.h>
 #endif
+#include <iostream>
+#ifndef _WIN32
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#else
+#define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#  define NOMINMAX // Disable macros min() and max()
+#endif
+#include <windows.h>
+#endif
 
 #include "types.h"
+
+#define stringify2(x) #x
+#define stringify(x) stringify2(x)
 
 namespace ShashChess {
 
@@ -47,12 +63,13 @@ void std_aligned_free(void* ptr);
 void* aligned_large_pages_alloc(size_t size); // memory aligned by page size, min alignment: 4096 bytes
 void aligned_large_pages_free(void* mem); // nop if mem == nullptr
 
-void dbg_hit_on(bool b);
-void dbg_hit_on(bool c, bool b);
-void dbg_mean_of(int v);
+void dbg_hit_on(bool cond, int slot = 0);
+void dbg_mean_of(int64_t value, int slot = 0);
+void dbg_stdev_of(int64_t value, int slot = 0);
+void dbg_correl_of(int64_t value1, int64_t value2, int slot = 0);
 void dbg_print();
 
-typedef std::chrono::milliseconds::rep TimePoint; // A value in milliseconds
+using TimePoint = std::chrono::milliseconds::rep; // A value in milliseconds
 static_assert(sizeof(TimePoint) == sizeof(int64_t), "TimePoint should be 64 bits");
 inline TimePoint now() {
   return std::chrono::duration_cast<std::chrono::milliseconds>
@@ -93,96 +110,19 @@ static inline const union { uint32_t i; char c[4]; } Le = { 0x01020304 };
 static inline const bool IsLittleEndian = (Le.c[0] == 4);
 
 
-// RunningAverage : a class to calculate a running average of a series of values.
-// For efficiency, all computations are done with integers.
-class RunningAverage {
-  public:
-
-      // Constructor
-      RunningAverage() {}
-
-      // Reset the running average to rational value p / q
-      void set(int64_t p, int64_t q)
-        { average = p * PERIOD * RESOLUTION / q; }
-
-      // Update average with value v
-      void update(int64_t v)
-        { average = RESOLUTION * v + (PERIOD - 1) * average / PERIOD; }
-
-      // Test if average is strictly greater than rational a / b
-      bool is_greater(int64_t a, int64_t b)
-        { return b * average > a * PERIOD * RESOLUTION ; }
-
-      int64_t value()
-        { return average / (PERIOD * RESOLUTION); }
-
-  private :
-      static constexpr int64_t PERIOD     = 4096;
-      static constexpr int64_t RESOLUTION = 1024;
-      int64_t average;
-};
-
 template <typename T, std::size_t MaxSize>
 class ValueList {
 
 public:
   std::size_t size() const { return size_; }
-  void resize(std::size_t newSize) { size_ = newSize; }
   void push_back(const T& value) { values_[size_++] = value; }
-  T& operator[](std::size_t index) { return values_[index]; }
-  T* begin() { return values_; }
-  T* end() { return values_ + size_; }
-  const T& operator[](std::size_t index) const { return values_[index]; }
   const T* begin() const { return values_; }
   const T* end() const { return values_ + size_; }
-
-  void swap(ValueList& other) {
-    const std::size_t maxSize = std::max(size_, other.size_);
-    for (std::size_t i = 0; i < maxSize; ++i) {
-      std::swap(values_[i], other.values_[i]);
-    }
-    std::swap(size_, other.size_);
-  }
 
 private:
   T values_[MaxSize];
   std::size_t size_ = 0;
 };
-
-//begin khalid from learner
-namespace Utility {
-
-  void init(const char *arg0);
-  std::string map_path(const std::string& path);
-  bool is_game_decided(const Position &pos, Value lastScore);
-}
-//end khalid from learner
-
-/// sigmoid(t, x0, y0, C, P, Q) implements a sigmoid-like function using only integers,
-/// with the following properties:
-///
-///  -  sigmoid is centered in (x0, y0)
-///  -  sigmoid has amplitude [-P/Q , P/Q] instead of [-1 , +1]
-///  -  limit is (y0 - P/Q) when t tends to -infinity
-///  -  limit is (y0 + P/Q) when t tends to +infinity
-///  -  the slope can be adjusted using C > 0, smaller C giving a steeper sigmoid
-///  -  the slope of the sigmoid when t = x0 is P/(Q*C)
-///  -  sigmoid is increasing with t when P > 0 and Q > 0
-///  -  to get a decreasing sigmoid, call with -t, or change sign of P
-///  -  mean value of the sigmoid is y0
-///
-/// Use <https://www.desmos.com/calculator/jhh83sqq92> to draw the sigmoid
-
-inline int64_t sigmoid(int64_t t, int64_t x0,
-                                  int64_t y0,
-                                  int64_t  C,
-                                  int64_t  P,
-                                  int64_t  Q)
-{
-   assert(C > 0);
-   return y0 + P * (t-x0) / (Q * (std::abs(t-x0) + C)) ;
-}
-
 
 /// xorshift64star Pseudo-Random Number Generator
 /// This class is based on original code written and dedicated
@@ -222,7 +162,7 @@ public:
 
 inline uint64_t mul_hi64(uint64_t a, uint64_t b) {
 #if defined(__GNUC__) && defined(IS_64BIT)
-    __extension__ typedef unsigned __int128 uint128;
+    __extension__ using uint128 = unsigned __int128;
     return ((uint128)a * (uint128)b) >> 64;
 #else
     uint64_t aL = (uint32_t)a, aH = a >> 32;
@@ -250,6 +190,201 @@ namespace CommandLine {
   extern std::string binaryDirectory;  // path of the executable directory
   extern std::string workingDirectory; // path of the working directory
 }
+//begin from khalid polyfish
+#define EMPTY   "<empty>"
+namespace Utility 
+{
+#if defined(_WIN32) || defined (_WIN64)
+    constexpr char DirectorySeparator = '\\';
+    constexpr char ReverseDirectorySeparator = '/';
+#else
+    constexpr char DirectorySeparator = '/';
+    constexpr char ReverseDirectorySeparator = '\\';
+#endif
+    std::string unquote(const std::string& s);
+    bool is_empty_filename(const std::string &f);
+    std::string fix_path(const std::string& p);
+    std::string combine_path(const std::string& p1, const std::string& p2);
+    std::string map_path(const std::string& p);
+    //from learner
+    void init(const char *arg0);
+    bool is_game_decided(const Position &pos, Value lastScore);
+    //from learner
+    size_t get_file_size(const std::string& f);
+    bool is_same_file(const std::string& f1, const std::string& f2);
+
+    std::string format_bytes(uint64_t bytes, int decimals);
+
+    std::string format_string(const char* const fmt, ...);
+
+    class FileMapping
+    {
+    private:
+        uint64_t mapping;
+        void* baseAddress;
+        size_t dataSize;
+
+    public:
+        FileMapping() : mapping(0), baseAddress(nullptr), dataSize(0)
+        {
+        }
+
+        ~FileMapping()
+        {
+            unmap();
+        }
+
+        bool map(const std::string& f, bool verbose)
+        {
+            unmap();
+
+#ifdef _WIN32
+            // Note FILE_FLAG_RANDOM_ACCESS is only a hint to Windows and as such may get ignored.
+            HANDLE fd = CreateFile(
+                f.c_str(),
+                GENERIC_READ,
+                FILE_SHARE_READ,
+                nullptr,
+                OPEN_EXISTING,
+                FILE_FLAG_RANDOM_ACCESS,
+                nullptr);
+
+            if (fd == INVALID_HANDLE_VALUE)
+            {
+                if(verbose)
+                    sync_cout << "info string CreateFile() failed for: " << f << ". Error code: " << GetLastError() << sync_endl;
+
+                return false;
+            }
+
+            //Read file size
+            DWORD sizeHigh;
+            DWORD sizeLow = GetFileSize(fd, &sizeHigh);
+            if (sizeHigh == 0 && sizeLow == 0)
+            {
+                CloseHandle(fd);
+
+                if(verbose)
+                    sync_cout << "info string File is empty: " << f << sync_endl;
+
+                return false;
+            }
+
+            //Create mapping
+            HANDLE mmap = CreateFileMapping(fd, nullptr, PAGE_READONLY, sizeHigh, sizeLow, nullptr);
+            CloseHandle(fd);
+
+            if (!mmap)
+            {
+                if(verbose)
+                    sync_cout << "info string CreateFileMapping() failed for: " << f << ". Error code: " << GetLastError() << sync_endl;
+
+                return false;
+            }
+            
+            //Get data pointer
+            void *viewBase = MapViewOfFile(mmap, FILE_MAP_READ, 0, 0, 0);
+            if (!viewBase)
+            {
+                if(verbose)
+                    sync_cout << "info string MapViewOfFile() failed for: " << f << ". Error code: " << GetLastError() << sync_endl;
+
+                return false;
+            }
+
+            //Assign
+            mapping = (uint64_t)mmap;
+            baseAddress = viewBase;
+            dataSize = ((size_t)sizeHigh << 32) | (size_t)sizeLow;
+#else
+            //Open the file
+            struct stat statbuf;
+            int fd = ::open(f.c_str(), O_RDONLY);
+
+            if (fd == -1)
+            {
+                if(verbose)
+                    sync_cout << "info string open() failed for: " << f << sync_endl;
+
+                return false;
+            }
+
+            //Read file size
+            fstat(fd, &statbuf);
+            if (statbuf.st_size == 0)
+            {
+                ::close(fd);
+
+                if(verbose)
+                    sync_cout << "info string File is empty: " << f << sync_endl;
+
+                return false;
+            }
+
+            //Create mapping
+            void *data = mmap(nullptr, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
+            if (data == MAP_FAILED)
+            {
+                ::close(fd);
+
+                if(verbose)
+                    sync_cout << "info string mmap() failed for: " << f << sync_endl;
+
+                return false;
+            }
+
+#if defined(MADV_RANDOM)
+            madvise(data, statbuf.st_size, MADV_RANDOM);
+#endif
+            ::close(fd);
+
+            mapping = statbuf.st_size;
+            baseAddress = data;
+            dataSize = statbuf.st_size;
+#endif
+            return true;
+        }
+
+        void unmap()
+        {
+            assert((mapping == 0) == (baseAddress == nullptr) && (baseAddress == nullptr) == (dataSize == 0));
+
+#ifdef _WIN32
+            if(baseAddress)
+                UnmapViewOfFile(baseAddress);
+
+            if(mapping)
+                CloseHandle((HANDLE)mapping);
+#else
+            if(baseAddress && mapping)
+                munmap(baseAddress, mapping);
+#endif
+            baseAddress = nullptr;
+            mapping = 0;
+            dataSize = 0;
+        }
+
+        bool has_data() const
+        {
+            assert((mapping == 0) == (baseAddress == nullptr) && (baseAddress == nullptr) == (dataSize == 0));
+
+            return (baseAddress != nullptr && dataSize != 0);
+        }
+
+        const unsigned char* data() const
+        {
+            assert(mapping != 0 && baseAddress != nullptr && dataSize != 0);
+            return (const unsigned char *)baseAddress;
+        }
+
+        size_t data_size() const
+        {
+            assert(mapping != 0 && baseAddress != nullptr && dataSize != 0);
+            return dataSize;
+        }
+    };
+}
+//end from khalid polyfish
 
 } // namespace ShashChess
 

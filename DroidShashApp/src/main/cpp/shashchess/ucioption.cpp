@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 #include "learn.h"
 #include "tt.h"
 #include "uci.h"
+#include "book/book.h"
 #include "syzygy/tbprobe.h"
-#include "polybook.h" //cerebellum
 
 using std::string;
 
@@ -40,22 +40,30 @@ UCI::OptionsMap Options; // Global object
 namespace UCI {
 
 /// 'On change' actions, triggered by an option's value change
-void on_clear_hash(const Option&) { Search::clear(); }
-void on_hash_size(const Option& o) { TT.resize(size_t(o)); }
-void on_logger(const Option& o) { start_logger(o); }
-void on_threads(const Option& o) { Threads.set(size_t(o)); }
-void on_full_threads(const Option& o) { Threads.setFull(o); } //full threads patch
-void on_persisted_learning(const Option& o) { if (!(o == "Off")){ LD.set_learning_mode(o);}}//Kelly learning
-void on_readonly_learning(const Option& o) { if (!(o == "Off")) { LD.set_readonly(o); } }
-void on_tb_path(const Option& o) { Tablebases::init(o); }
-void on_use_NNUE(const Option& ) { Eval::NNUE::init(); }
-void on_eval_file(const Option& ) { Eval::NNUE::init(); }
-void on_UCI_LimitStrength(const Option& ) { Eval::NNUE::init(); }
-void on_LimitStrength_CB(const Option& ) { Eval::NNUE::init(); }
-//cerebellum+book begin
-void on_book1_file(const Option& o) { polybook[0].init(o); }
-void on_book2_file(const Option& o) { polybook[1].init(o); }
-//cerebellum+book end
+static void on_clear_hash(const Option&) { Search::clear(); }
+static void on_hash_size(const Option& o) { TT.resize(size_t(o)); }
+static void on_logger(const Option& o) { start_logger(o); }
+static void on_threads(const Option& o) { Threads.set(size_t(o)); }
+static void on_full_threads(const Option& o) { Threads.setFull(o); } //full threads patch
+static void on_persisted_learning(const Option& o) { if (!(o == "Off")){ LD.set_learning_mode(o);}}//Kelly learning
+static void on_readonly_learning(const Option& o) { if (!(o == "Off")) { LD.set_readonly(o); } }//Kelly learning
+static void on_tb_path(const Option& o) { Tablebases::init(o); }
+static void on_use_NNUE(const Option&) { Eval::NNUE::init(); }
+static void on_eval_file(const Option&) { Eval::NNUE::init(); }
+static void on_UCI_LimitStrength(const Option& ) { Eval::NNUE::init(); }
+static void on_LimitStrength_CB(const Option& ) { Eval::NNUE::init(); }
+//book management begin
+static void on_book1(const Option& o) { Book::on_book(0, (string)o); }
+static void on_book2(const Option& o) { Book::on_book(1, (string)o); }
+//livebook begin
+#ifdef USE_LIVEBOOK
+static void on_livebook_url(const Option& o) { Search::setLiveBookURL(o); }
+static void on_livebook_timeout(const Option& o) { Search::setLiveBookTimeout(o); }
+static void on_live_book_retry(const Option& o) { Search::set_livebook_retry(o); }
+static void on_livebook_depth(const Option& o) { Search::set_livebook_depth(o); }
+#endif
+//livebook end
+//book management end
 
 /// Our case insensitive less() function as required by UCI protocol
 bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const {
@@ -72,19 +80,20 @@ void init(OptionsMap& o) {
   constexpr int MaxHashMB = Is64Bit ? 33554432 : 2048;
 
   o["Debug Log File"]        << Option("", on_logger);
-  o["Threads"]               << Option(1, 1, 512, on_threads);
+  o["Threads"]               << Option(1, 1, 1024, on_threads);
   o["Hash"]                  << Option(16, 1, MaxHashMB, on_hash_size);
   o["Clear Hash"]            << Option(on_clear_hash);
   o["Ponder"]                << Option(false);
   o["MultiPV"]               << Option(1, 1, 500);
   o["Move Overhead"]         << Option(10, 0, 5000);
+  o["Minimum Thinking Time"] << Option(100, 0, 5000);
   o["Slow Mover"]            << Option(100, 10, 1000);
   o["UCI_Chess960"]          << Option(false);
   o["UCI_LimitStrength"]     << Option(false, on_UCI_LimitStrength);
   o["Handicapped Depth"]     << Option(false);
   o["LimitStrength_CB"]      << Option(false,on_LimitStrength_CB);
-  o["UCI_Elo"]               << Option(2850, 1350, 2850);//handicap mode from ShashChess 
-  o["ELO_CB"]                << Option(2850, 1350, 2850);//handicap mode from ShashChess 
+  o["UCI_Elo"]               << Option(3190, 1320, 3190);//handicap mode from ShashChess 
+  o["ELO_CB"]                << Option(3190, 1320, 3190);//handicap mode from ShashChess 
   o["UCI_ShowWDL"]           << Option(false);
   o["SyzygyPath"]            << Option("<empty>", on_tb_path);
   o["Syzygy50MoveRule"]      << Option(true);
@@ -94,30 +103,43 @@ void init(OptionsMap& o) {
   // The default must follow the format nn-[SHA256 first 12 digits].nnue
   // for the build process (profile-build and fishtest) to work.
   o["EvalFile"]              << Option(EvalFileDefaultName, on_eval_file);
-  //cerebellum book begin
-  o["Book1"]                             << Option(false);
-  o["Book1 File"]                        << Option("<empty>", on_book1_file);
-  o["Book1 BestBookMove"]                << Option(true);
-  o["Book1 Depth"]                       << Option(100, 1, 350);
-						 
-  o["Book2"]                             << Option(false);
-  o["Book2 File"]                        << Option("<empty>", on_book2_file);
-  o["Book2 BestBookMove"]                << Option(true);
-  o["Book2 Depth"]                       << Option(100, 1, 350);
-  //cerebellum book end  
+  //Polyfish ctg and bin books begin	
+  o["CTG/BIN Book 1 File"]     << Option("<empty>", on_book1);
+  o["Book 1 Width"]            << Option(1, 1, 20);
+  o["Book 1 Depth"]            << Option(255, 1, 255);
+  o["(CTG) Book 1 Only Green"] << Option(true);
+  o["CTG/BIN Book 2 File"]     << Option("<empty>", on_book2);
+  o["Book 2 Width"]            << Option(1, 1, 20);
+  o["Book 2 Depth"]            << Option(255, 1, 255);
+  o["(CTG) Book 2 Only Green"] << Option(true);
+  //Polyfish ctg and bin books end
+  //livebook begin
+  #ifdef USE_LIVEBOOK
+  o["Live Book"]             << Option(false);
+  o["Live Book URL"]         << Option("http://www.chessdb.cn/cdb.php", on_livebook_url);
+  o["Live Book Timeout"]     << Option(5000, 0, 10000, on_livebook_timeout);
+  o["Live Book Retry"]       << Option(3, 1, 100, on_live_book_retry);
+  o["Live Book Diversity"]   << Option(false);
+  o["Live Book Contribute"]  << Option(false);
+  o["Live Book Depth"]       << Option(100, 1, 100, on_livebook_depth);
+  #endif
+  //livebook end
   o["Full depth threads"]    << Option(0, 0, 512, on_full_threads); //if this is used, must be after #Threads is set.
   o["Opening variety"]       << Option (0, 0, 40);
   o["Persisted learning"]    << Option("Off var Off var Standard var Self", "Off", on_persisted_learning);
   o["Read only learning"]    << Option(false, on_readonly_learning);
-  o["MCTS"]                  << Option(false);
+  o["MCTS by Shashin"]       << Option(false);
   o["MCTSThreads"]           << Option(1, 1, 512);
   o["Multi Strategy"]        << Option(20, 0, 100);
   o["Multi MinVisits"]       << Option(5, 0, 1000);
-  o["Concurrent Experience"] << Option (false);
-  o["GoldDigger"]            << Option(false); 
-  o["Tal"]                   << Option(false);
+  o["Concurrent Experience"] << Option (false); 
+  o["High Tal"]              << Option(false);
+  o["Middle Tal"]            << Option(false);
+  o["Low Tal"]               << Option(false);
   o["Capablanca"]            << Option(false);
-  o["Petrosian"]             << Option(false);
+  o["Low Petrosian"]         << Option(false);
+  o["Middle Petrosian"]      << Option(false);
+  o["High Petrosian"]        << Option(false);
 }
 
 
@@ -165,13 +187,13 @@ Option::Option(double v, int minv, int maxv, OnChange f) : type("spin"), min(min
 Option::Option(const char* v, const char* cur, OnChange f) : type("combo"), min(0), max(0), on_change(f)
 { defaultValue = v; currentValue = cur; }
 
-Option::operator double() const {
+Option::operator int() const {
   assert(type == "check" || type == "spin");
-  return (type == "spin" ? stof(currentValue) : currentValue == "true");
+  return (type == "spin" ? std::stoi(currentValue) : currentValue == "true");
 }
 
 Option::operator std::string() const {
-  assert(type == "string" || type == "combo");
+  assert(type == "string" || type == "combo");//combo uci options
   return currentValue;
 }
 

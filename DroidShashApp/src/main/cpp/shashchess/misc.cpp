@@ -1,6 +1,6 @@
 /*
   ShashChess, a UCI chess playing engine derived from Stockfish
-  Copyright (C) 2004-2022 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2023 The Stockfish developers (see AUTHORS file)
 
   ShashChess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,22 +32,28 @@
 // the calls at compile time), try to load them at runtime. To do this we need
 // first to define the corresponding function pointers.
 extern "C" {
-typedef bool(*fun1_t)(LOGICAL_PROCESSOR_RELATIONSHIP,
-                      PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, PDWORD);
-typedef bool(*fun2_t)(USHORT, PGROUP_AFFINITY);
-typedef bool(*fun3_t)(HANDLE, CONST GROUP_AFFINITY*, PGROUP_AFFINITY);
-typedef bool(*fun4_t)(USHORT, PGROUP_AFFINITY, USHORT, PUSHORT);
-typedef WORD(*fun5_t)();
+using fun1_t = bool(*)(LOGICAL_PROCESSOR_RELATIONSHIP,
+                       PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, PDWORD);
+using fun2_t = bool(*)(USHORT, PGROUP_AFFINITY);
+using fun3_t = bool(*)(HANDLE, CONST GROUP_AFFINITY*, PGROUP_AFFINITY);
+using fun4_t = bool(*)(USHORT, PGROUP_AFFINITY, USHORT, PUSHORT);
+using fun5_t = WORD(*)();
+using fun6_t = bool(*)(HANDLE, DWORD, PHANDLE);
+using fun7_t = bool(*)(LPCSTR, LPCSTR, PLUID);
+using fun8_t = bool(*)(HANDLE, BOOL, PTOKEN_PRIVILEGES, DWORD, PTOKEN_PRIVILEGES, PDWORD);
 }
 #endif
 
+#include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <string_view>
 #include <vector>
-#include <cstdlib>
+#include <stdarg.h>
 
 #if defined(__linux__) && !defined(__ANDROID__)
 #include <stdlib.h>
@@ -69,9 +75,8 @@ namespace ShashChess {
 
 namespace {
 
-/// Version number. If Version is left empty, then compile date in the format
-/// DD-MM-YY and show in engine_info.
-const string Version = "21.1";
+/// Version number or dev.
+constexpr string_view version = "33.2";
 
 /// Our fancy logging facility. The trick here is to replace cin.rdbuf() and
 /// cout.rdbuf() with two Tie objects that tie cin and cout to a file stream. We
@@ -139,87 +144,41 @@ public:
 
 } // namespace
 
-//begin learning from Khalid
-namespace Utility
-{
-    string myFolder;
-
-    namespace
-    {
-#if defined(_WIN32) || defined (_WIN64)
-        constexpr char DirectorySeparator = '\\';
-#else
-        constexpr char DirectorySeparator = '/';
-#endif
-    }
-
-    void init(const char* arg0)
-    {
-        string s = arg0;
-        size_t i = s.find_last_of(DirectorySeparator);
-        if(i != string::npos)
-            myFolder = s.substr(0, i);
-    }
-
-    //Map relative folder or filename to local directory of the engine executable
-    string map_path(const string& path)
-    {
-        string newPath = path;
-
-        //Make sure we have something to work on
-        if (!path.size() || !myFolder.size())
-            return path;
-
-        //Make sure we can map this path
-        if (newPath.find(DirectorySeparator) == string::npos)
-            newPath = myFolder + DirectorySeparator + newPath;
-
-        return newPath;
-    }
-
-    bool is_game_decided(const Position& pos, Value lastScore)
-    {
-      //Arena's default adjudication conditions begin
-      //Assume game is decided if |last sent score| is above 900 cp
-      if (lastScore != VALUE_NONE && std::abs(lastScore) > 9* PawnValueEg)
-          return true;
-
-
-        //Assume game is decided (draw) if game ply is above 500
-        if (pos.game_ply() > 500)
-            return true;
-        //Arena's default adjudication conditions end
-        //From Fritz GUI: assume a game is decided when game ply is above 1200 and |last score| is 0=VALUE_DRAW
-        if (pos.game_ply() > 1200 && abs(lastScore) == VALUE_DRAW )
-            return true;
-
-        //Assume game is decided if remaining pieces is less than 8 (based on Lomosonov tablebases)
-        if (pos.count<ALL_PIECES>() <= Tablebases::MaxCardinality)
-            return true;
-
-        //Assume game is not decided!
-        return false;
-    }
-}
-//end learning from Khalid
-
-/// engine_info() returns the full name of the current ShashChess version. This
-/// will be either "ShashChess <Tag> DD-MM-YY" (where DD-MM-YY is the date when
-/// the program was compiled) or "ShashChess <Version>", depending on whether
-/// Version is empty.
+/// engine_info() returns the full name of the current ShashChess version.
+/// For local dev compiles we try to append the commit sha and commit date
+/// from git if that fails only the local compilation date is set and "nogit" is specified:
+/// ShashChess dev-YYYYMMDD-SHA
+/// or
+/// ShashChess dev-YYYYMMDD-nogit
+///
+/// For releases (non dev builds) we only include the version number:
+/// ShashChess version
 
 string engine_info(bool to_uci) {
+  stringstream ss;
+  ss << "ShashChess " << version << setfill('0');
 
-  const string months("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec");
-  string month, day, year;
-  stringstream ss, date(__DATE__); // From compiler, format is "Sep 21 2008"
-
-  ss << "ShashChess " << Version << setfill('0');
-
-  if (Version.empty())
+  if constexpr (version == "dev")
   {
+      ss << "-";
+      #ifdef GIT_DATE
+      ss << stringify(GIT_DATE);
+      #else
+      constexpr string_view months("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec");
+      string month, day, year;
+      stringstream date(__DATE__); // From compiler, format is "Sep 21 2008"
+
       date >> month >> day >> year;
-      ss << setw(2) << day << setw(2) << (1 + months.find(month) / 4) << year.substr(2);
+      ss << year << setw(2) << setfill('0') << (1 + months.find(month) / 4) << setw(2) << setfill('0') << day;
+      #endif
+
+      ss << "-";
+
+      #ifdef GIT_SHA
+      ss << stringify(GIT_SHA);
+      #else
+      ss << "nogit";
+      #endif
   }
 
   ss << (to_uci  ? "\nid author ": " by ")
@@ -233,8 +192,6 @@ string engine_info(bool to_uci) {
 
 std::string compiler_info() {
 
-  #define stringify2(x) #x
-  #define stringify(x) stringify2(x)
   #define make_version_string(major, minor, patch) stringify(major) "." stringify(minor) "." stringify(patch)
 
 /// Predefined macros hell:
@@ -346,21 +303,94 @@ std::string compiler_info() {
 
 
 /// Debug functions used mainly to collect run-time statistics
-static std::atomic<int64_t> hits[2], means[2];
+constexpr int MaxDebugSlots = 32;
 
-void dbg_hit_on(bool b) { ++hits[0]; if (b) ++hits[1]; }
-void dbg_hit_on(bool c, bool b) { if (c) dbg_hit_on(b); }
-void dbg_mean_of(int v) { ++means[0]; means[1] += v; }
+namespace {
+
+template<size_t N>
+struct DebugInfo {
+    std::atomic<int64_t> data[N] = { 0 };
+
+    constexpr inline std::atomic<int64_t>& operator[](int index) { return data[index]; }
+};
+
+DebugInfo<2> hit[MaxDebugSlots];
+DebugInfo<2> mean[MaxDebugSlots];
+DebugInfo<3> stdev[MaxDebugSlots];
+DebugInfo<6> correl[MaxDebugSlots];
+
+}  // namespace
+
+void dbg_hit_on(bool cond, int slot) {
+
+    ++hit[slot][0];
+    if (cond)
+        ++hit[slot][1];
+}
+
+void dbg_mean_of(int64_t value, int slot) {
+
+    ++mean[slot][0];
+    mean[slot][1] += value;
+}
+
+void dbg_stdev_of(int64_t value, int slot) {
+
+    ++stdev[slot][0];
+    stdev[slot][1] += value;
+    stdev[slot][2] += value * value;
+}
+
+void dbg_correl_of(int64_t value1, int64_t value2, int slot) {
+
+    ++correl[slot][0];
+    correl[slot][1] += value1;
+    correl[slot][2] += value1 * value1;
+    correl[slot][3] += value2;
+    correl[slot][4] += value2 * value2;
+    correl[slot][5] += value1 * value2;
+}
 
 void dbg_print() {
 
-  if (hits[0])
-      cerr << "Total " << hits[0] << " Hits " << hits[1]
-           << " hit rate (%) " << 100 * hits[1] / hits[0] << endl;
+    int64_t n;
+    auto E   = [&n](int64_t x) { return double(x) / n; };
+    auto sqr = [](double x) { return x * x; };
 
-  if (means[0])
-      cerr << "Total " << means[0] << " Mean "
-           << (double)means[1] / means[0] << endl;
+    for (int i = 0; i < MaxDebugSlots; ++i)
+        if ((n = hit[i][0]))
+            std::cerr << "Hit #" << i
+                      << ": Total " << n << " Hits " << hit[i][1]
+                      << " Hit Rate (%) " << 100.0 * E(hit[i][1])
+                      << std::endl;
+
+    for (int i = 0; i < MaxDebugSlots; ++i)
+        if ((n = mean[i][0]))
+        {
+            std::cerr << "Mean #" << i
+                      << ": Total " << n << " Mean " << E(mean[i][1])
+                      << std::endl;
+        }
+
+    for (int i = 0; i < MaxDebugSlots; ++i)
+        if ((n = stdev[i][0]))
+        {
+            double r = sqrtl(E(stdev[i][2]) - sqr(E(stdev[i][1])));
+            std::cerr << "Stdev #" << i
+                      << ": Total " << n << " Stdev " << r
+                      << std::endl;
+        }
+
+    for (int i = 0; i < MaxDebugSlots; ++i)
+        if ((n = correl[i][0]))
+        {
+            double r = (E(correl[i][5]) - E(correl[i][1]) * E(correl[i][3]))
+                       / (  sqrtl(E(correl[i][2]) - sqr(E(correl[i][1])))
+                          * sqrtl(E(correl[i][4]) - sqr(E(correl[i][3]))));
+            std::cerr << "Correl. #" << i
+                      << ": Total " << n << " Coefficient " << r
+                      << std::endl;
+        }
 }
 
 
@@ -421,8 +451,10 @@ void* std_aligned_alloc(size_t alignment, size_t size) {
 #if defined(POSIXALIGNEDALLOC)
   void *mem;
   return posix_memalign(&mem, alignment, size) ? nullptr : mem;
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(_M_ARM) && !defined(_M_ARM64)
   return _mm_malloc(size, alignment);
+#elif defined(_WIN32)
+  return _aligned_malloc(size, alignment);
 #else
   return std::aligned_alloc(alignment, size);
 #endif
@@ -432,8 +464,10 @@ void std_aligned_free(void* ptr) {
 
 #if defined(POSIXALIGNEDALLOC)
   free(ptr);
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(_M_ARM) && !defined(_M_ARM64)
   _mm_free(ptr);
+#elif defined(_WIN32)
+  _aligned_free(ptr);
 #else
   free(ptr);
 #endif
@@ -443,10 +477,9 @@ void std_aligned_free(void* ptr) {
 
 #if defined(_WIN32)
 
-static void* aligned_large_pages_alloc_windows(size_t allocSize) {
+static void* aligned_large_pages_alloc_windows([[maybe_unused]] size_t allocSize) {
 
   #if !defined(_WIN64)
-    (void)allocSize; // suppress unused-parameter compiler warning
     return nullptr;
   #else
 
@@ -458,11 +491,30 @@ static void* aligned_large_pages_alloc_windows(size_t allocSize) {
   if (!largePageSize)
       return nullptr;
 
-  // We need SeLockMemoryPrivilege, so try to enable it for the process
-  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hProcessToken))
+  // Dynamically link OpenProcessToken, LookupPrivilegeValue and AdjustTokenPrivileges
+
+  HMODULE hAdvapi32 = GetModuleHandle(TEXT("advapi32.dll"));
+
+  if (!hAdvapi32)
+      hAdvapi32 = LoadLibrary(TEXT("advapi32.dll"));
+
+  auto fun6 = (fun6_t)(void(*)())GetProcAddress(hAdvapi32, "OpenProcessToken");
+  if (!fun6)
+      return nullptr;
+  auto fun7 = (fun7_t)(void(*)())GetProcAddress(hAdvapi32, "LookupPrivilegeValueA");
+  if (!fun7)
+      return nullptr;
+  auto fun8 = (fun8_t)(void(*)())GetProcAddress(hAdvapi32, "AdjustTokenPrivileges");
+  if (!fun8)
       return nullptr;
 
-  if (LookupPrivilegeValue(NULL, SE_LOCK_MEMORY_NAME, &luid))
+  // We need SeLockMemoryPrivilege, so try to enable it for the process
+  if (!fun6( // OpenProcessToken()
+      GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hProcessToken))
+          return nullptr;
+
+  if (fun7( // LookupPrivilegeValue(nullptr, SE_LOCK_MEMORY_NAME, &luid)
+      nullptr, "SeLockMemoryPrivilege", &luid))
   {
       TOKEN_PRIVILEGES tp { };
       TOKEN_PRIVILEGES prevTp { };
@@ -474,17 +526,18 @@ static void* aligned_large_pages_alloc_windows(size_t allocSize) {
 
       // Try to enable SeLockMemoryPrivilege. Note that even if AdjustTokenPrivileges() succeeds,
       // we still need to query GetLastError() to ensure that the privileges were actually obtained.
-      if (AdjustTokenPrivileges(
+      if (fun8( // AdjustTokenPrivileges()
               hProcessToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), &prevTp, &prevTpLen) &&
           GetLastError() == ERROR_SUCCESS)
       {
           // Round up size to full pages and allocate
           allocSize = (allocSize + largePageSize - 1) & ~size_t(largePageSize - 1);
           mem = VirtualAlloc(
-              NULL, allocSize, MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES, PAGE_READWRITE);
+              nullptr, allocSize, MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES, PAGE_READWRITE);
 
           // Privilege no longer needed, restore previous state
-          AdjustTokenPrivileges(hProcessToken, FALSE, &prevTp, 0, NULL, NULL);
+          fun8( // AdjustTokenPrivileges ()
+              hProcessToken, FALSE, &prevTp, 0, nullptr, nullptr);
       }
   }
 
@@ -502,7 +555,7 @@ void* aligned_large_pages_alloc(size_t allocSize) {
 
   // Fall back to regular, page aligned, allocation if necessary
   if (!mem)
-      mem = VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+      mem = VirtualAlloc(nullptr, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
   return mem;
 }
@@ -566,7 +619,7 @@ void bindThisThread(size_t) {}
 /// API and returns the best node id for the thread with index idx. Original
 /// code from Texel by Peter Österlund.
 
-int best_node(size_t idx) {
+static int best_node(size_t idx) {
 
   int threads = 0;
   int nodes = 0;
@@ -575,7 +628,7 @@ int best_node(size_t idx) {
   DWORD byteOffset = 0;
 
   // Early exit if the needed API is not available at runtime
-  HMODULE k32 = GetModuleHandle("Kernel32.dll");
+  HMODULE k32 = GetModuleHandle(TEXT("Kernel32.dll"));
   auto fun1 = (fun1_t)(void(*)())GetProcAddress(k32, "GetLogicalProcessorInformationEx");
   if (!fun1)
       return -1;
@@ -645,7 +698,7 @@ void bindThisThread(size_t idx) {
       return;
 
   // Early exit if the needed API are not available at runtime
-  HMODULE k32 = GetModuleHandle("Kernel32.dll");
+  HMODULE k32 = GetModuleHandle(TEXT("Kernel32.dll"));
   auto fun2 = (fun2_t)(void(*)())GetProcAddress(k32, "GetNumaNodeProcessorMaskEx");
   auto fun3 = (fun3_t)(void(*)())GetProcAddress(k32, "SetThreadGroupAffinity");
   auto fun4 = (fun4_t)(void(*)())GetProcAddress(k32, "GetNumaNodeProcessorMask2");
@@ -691,8 +744,7 @@ string argv0;            // path+name of the executable binary, as given by argv
 string binaryDirectory;  // path of the executable directory
 string workingDirectory; // path of the working directory
 
-void init(int argc, char* argv[]) {
-    (void)argc;
+void init([[maybe_unused]] int argc, char* argv[]) {
     string pathSeparator;
 
     // extract the path+name of the executable binary
@@ -733,5 +785,172 @@ void init(int argc, char* argv[]) {
 
 
 } // namespace CommandLine
+//book mangement and learning begin
+namespace Utility
+{
+    //begin learning from Khalid
+    string myFolder;
+
+    void init(const char* arg0)
+    {
+        string s = arg0;
+        size_t i = s.find_last_of(DirectorySeparator);
+        if(i != string::npos)
+            myFolder = s.substr(0, i);
+    }
+    //end learning from Khalid    
+    string unquote(const string& s)
+    {
+        string s1 = s;
+
+        if (s1.size() > 2)
+        {
+            if ((s1.front() == '\"' && s1.back() == '\"') || (s1.front() == '\'' && s1.back() == '\''))
+            {
+                s1 = s1.substr(1, s1.size() - 2);
+            }
+        }
+
+        return s1;
+    }
+
+    bool is_empty_filename(const string &fn)
+    {
+        if (fn.empty())
+            return true;
+
+        static string Empty = EMPTY;
+        return equal(
+            fn.begin(), fn.end(),
+            Empty.begin(), Empty.end(),
+            [](char a, char b) { return tolower(a) == tolower(b); });
+    }
+
+    string fix_path(const string& p)
+    {
+        if (is_empty_filename(p))
+            return p;
+
+        string p1 = unquote(p);
+        replace(p1.begin(), p1.end(), ReverseDirectorySeparator, DirectorySeparator);
+
+        return p1;
+    }
+
+    string combine_path(const string& p1, const string& p2)
+    {
+        //We don't expect the first part of the path to be empty!
+        assert(is_empty_filename(p1) == false);
+
+        if (is_empty_filename(p2))
+            return p2;
+
+        string p;
+        if (p1.back() == DirectorySeparator || p1.back() == ReverseDirectorySeparator)
+            p = p1 + p2;
+        else
+            p = p1 + DirectorySeparator + p2;
+
+        return fix_path(p);
+    }
+
+    string map_path(const string& p)
+    {
+        if (is_empty_filename(p))
+            return p;
+
+        string p2 = fix_path(p);
+
+        //Make sure we can map this path
+        if (p2.find(DirectorySeparator) == string::npos)
+            p2 = combine_path(CommandLine::binaryDirectory, p);
+
+        return p2;
+    }
+
+    size_t get_file_size(const string& f)
+    {
+        if(is_empty_filename(f))
+            return (size_t)-1;
+
+        ifstream in(map_path(f), ifstream::ate | ifstream::binary);
+        if (!in.is_open())
+            return (size_t)-1;
+
+        return (size_t)in.tellg();
+    }
+
+    bool is_same_file(const string& f1, const string& f2)
+    {
+        return map_path(f1) == map_path(f2);
+    }
+
+    string format_bytes(uint64_t bytes, int decimals)
+    {
+        static const uint64_t KB = 1024;
+        static const uint64_t MB = KB * 1024;
+        static const uint64_t GB = MB * 1024;
+        static const uint64_t TB = GB * 1024;
+
+        stringstream ss;
+
+        if (bytes < KB)
+            ss << bytes << " B";
+        else if (bytes < MB)
+            ss << fixed << setprecision(decimals) << ((double)bytes / KB) << "KB";
+        else if (bytes < GB)
+            ss << fixed << setprecision(decimals) << ((double)bytes / MB) << "MB";
+        else if (bytes < TB)
+            ss << fixed << setprecision(decimals) << ((double)bytes / GB) << "GB";
+        else
+            ss << fixed << setprecision(decimals) << ((double)bytes / TB) << "TB";
+
+        return ss.str();
+    }
+
+    //Code is an `edited` version of: https://stackoverflow.com/a/49812018
+    string format_string(const char* const fmt, ...)
+    {
+        //Initialize use of the variable arguments
+        va_list vaArgs;
+        va_start(vaArgs, fmt);
+
+        //Acquire the required string size
+        va_start(vaArgs, fmt);
+        int len = vsnprintf(nullptr, 0, fmt, vaArgs);
+        va_end(vaArgs);
+
+        
+        //Allocate enough buffer and format
+        vector<char> v(len + 1);
+        
+        va_start(vaArgs, fmt);
+        vsnprintf(v.data(), v.size(), fmt, vaArgs);
+        va_end(vaArgs);
+
+        return string(v.data(), len);
+    }        
+    bool is_game_decided(const Position& pos, Value lastScore)
+    {
+        static constexpr const Value DecidedGameEvalThreeshold = PawnValueEg * 5;
+        static constexpr const int DecidedGameMaxPly = 150;
+        static constexpr const int DecidedGameMaxPieceCount = 5;
+
+        //Assume game is decided if |last sent score| is above DecidedGameEvalThreeshold
+        if (lastScore != VALUE_NONE && std::abs(lastScore) > DecidedGameEvalThreeshold)
+            return true;
+
+        //Assume game is decided (draw) if game ply is above 500
+        if (pos.game_ply() > DecidedGameMaxPly)
+            return true;
+
+        if (pos.count<ALL_PIECES>() < DecidedGameMaxPieceCount)
+            return true;
+
+        //Assume game is not decided!
+        return false;
+    }
+} // namespace Utility
+//Book management and learning end
 
 } // namespace ShashChess

@@ -36,7 +36,7 @@ import org.amchess.droidshash.EngineOptions;
 
 /** ShashChess engine running as process, started from assets resource. */
 public class InternalShashChess extends ExternalEngine {
-    private static final String defaultNet = "nn-6877cd24400e.nnue";
+    private static final String defaultNet = "nn-5af11540bbfe.nnue";
     private static final String netOption = "evalfile";
     private File defaultNetFile; // To get the full path of the copied default network file
 
