@@ -444,7 +444,7 @@ inline void updateForRevertShashinValues(Position &pos, int ply)
     pos.this_thread()->shashinPosKey=pos.key();
     pos.this_thread()->shashinPly=ply;
 }
-/*inline bool isShashinPositionPetrosian(Position &pos)
+inline bool isShashinPositionPetrosian(Position &pos)
 {
     if((pos.this_thread()->shashinWinProbabilityRange==SHASHIN_POSITION_HIGH_PETROSIAN)
         || 
@@ -477,7 +477,7 @@ inline bool isShashinPositionTal(Position &pos)
         return true;
     }
     return false;
-}*/
+}
 inline int8_t getInitialShashinWinProbabilityRange(Position &pos, Stack* ss)
 {
     if (!highTal && !middleTal && !lowTal && !capablanca && !highPetrosian && !middlePetrosian && !lowPetrosian)
@@ -911,7 +911,7 @@ void Thread::search() {
           {
               // Adjust the effective depth searched, but ensuring at least one effective increment for every
               // four searchAgain steps (see issue #2717).
-              Depth adjustedDepth = (isShashinHigh(rootPos)
+              Depth adjustedDepth = ((rootPos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)
                                      ||
                                      (rootPos.key()!=rootPos.this_thread()->shashinPosKey)
                                     )
@@ -1211,7 +1211,7 @@ namespace {
               && (!ourMove || beta < VALUE_MATE_IN_MAX_PLY)
               && (ttValue != VALUE_DRAW || VALUE_DRAW >= beta)
               ) 
-        	|| isShashinLow(pos) || (pos.key()!=pos.this_thread()->shashinPosKey)) 
+        	||(((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA))||(pos.key()!=pos.this_thread()->shashinPosKey))) 
         // from Crystal end
         && tte->depth() > depth - (tte->bound() == BOUND_EXACT)
         && ttValue != VALUE_NONE // Possible in case of TT access race or if !ttHit
@@ -1468,13 +1468,13 @@ namespace {
     if ((   !PvNode
         && (ourMove || !excludedMove)
         && !thisThread->nmpGuardV
-        &&  abs(eval) < 2 * VALUE_KNOWN_WIN)||isShashinHigh(pos))
+        &&  abs(eval) < 2 * VALUE_KNOWN_WIN)||isShashinHigh(pos)|| (pos.key()!=pos.this_thread()->shashinPosKey) || (!isShashinPositionTal(pos)))
     {
     // Step 7. Razoring (~1 Elo).
     // If eval is really low check with qsearch if it can exceed alpha, if it can't,
     // return a fail low.
-    if ((!ourMove|| isShashinLow(pos) 
-                     || (pos.key()!=pos.this_thread()->shashinPosKey) )
+    if ((!ourMove||(((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA))
+                     || (pos.key()!=pos.this_thread()->shashinPosKey) ))
         &&
         (eval < alpha - 456 - 252 * depth * depth))//from Crystal
     {
@@ -1500,7 +1500,7 @@ namespace {
                     &&  abs(alpha) < VALUE_KNOWN_WIN
                 )
                 &&
-                ((!(isShashinHighMiddle(pos)))&& (pos.key()==pos.this_thread()->shashinPosKey))
+                ((!(isShashinHighMiddle(pos)))&& (pos.key()==pos.this_thread()->shashinPosKey)&&isShashinPositionTal(pos))
             )
             ||
 	        (
@@ -1508,7 +1508,7 @@ namespace {
                     eval < 24923 // larger than VALUE_KNOWN_WIN, but smaller than TB wins
                 )
                 &&
-                (((isShashinHighMiddle(pos)))|| (pos.key()!=pos.this_thread()->shashinPosKey))
+                (((isShashinHighMiddle(pos)))|| (pos.key()!=pos.this_thread()->shashinPosKey)||!isShashinPositionTal(pos))
             )            
         )
     )    
@@ -1526,7 +1526,7 @@ namespace {
 		&& !disableNMAndPC //Kelly
 		&& (((isShashinMiddle(pos)
 	          ||
-              (pos.key()!=pos.this_thread()->shashinPosKey))
+              (pos.key()!=pos.this_thread()->shashinPosKey)|| (!isShashinPositionTal(pos)))
               &&
 			  !PvNode
 			  && (ss-1)->currentMove != MOVE_NULL
@@ -1536,7 +1536,7 @@ namespace {
 		    || 
 		    ((!(isShashinMiddle(pos)))
               && 
-              (pos.key()==pos.this_thread()->shashinPosKey)
+              (pos.key()==pos.this_thread()->shashinPosKey)&& isShashinPositionTal(pos)
 			  &&
 			  !thisThread->nmpGuard
 			  && !gameCycle
@@ -1553,16 +1553,16 @@ namespace {
         // Null move dynamic reduction based on depth and eval
         Depth R = std::min(int(eval - beta) / 173, 6) + depth / 3 + 4;
         //from Crystal begin 
-        if (!ourMove && ((ss-1)->secondaryLine) && ((!(isShashinMiddle(pos)))
-                                                && (pos.key()==pos.this_thread()->shashinPosKey)))
-            R = std::min(R, 8);
+        /*if (!ourMove && ((ss-1)->secondaryLine) && ((!(isShashinMiddle(pos)))
+                                                && (pos.key()==pos.this_thread()->shashinPosKey) && isShashinPositionTal(pos) ))
+            R = std::min(R, 8);*/
         //from Crystal end
-        if (   depth < 11
+        /*if (   depth < 11
            	|| ttValue >= beta
             || (tte->depth()) < depth-R
             || !((tte->bound()) & BOUND_UPPER)        
-            || (isShashinMiddle(pos)) || (pos.key()!=pos.this_thread()->shashinPosKey)) //from Crystal
-        {   
+            || (isShashinMiddle(pos)) || (pos.key()!=pos.this_thread()->shashinPosKey)||(!isShashinPositionTal(pos))) //from Crystal
+        { */  
         ss->currentMove = MOVE_NULL;
         ss->continuationHistory = &thisThread->continuationHistory[0][0][NO_PIECE][0];
 
@@ -1592,7 +1592,7 @@ namespace {
             // Do verification search at high depths, with null move pruning disabled
             // until ply exceeds nmpMinPly.
             //from Crystal begin
-            if(isShashinMiddle(pos)|| (pos.key()!=pos.this_thread()->shashinPosKey)){
+            if((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA)|| (pos.key()!=pos.this_thread()->shashinPosKey)){
             thisThread->nmpMinPly = ss->ply + 3 * (depth-R) / 4;
             }
             //from Crystal end                
@@ -1600,41 +1600,35 @@ namespace {
             Value v = search<NonPV>(pos, ss, beta-1, beta, depth-R, false);
             thisThread->nmpGuardV = false; // from Crystal
             //from Crystal begin
-            if(isShashinMiddle(pos)|| (pos.key()!=pos.this_thread()->shashinPosKey)){
+			if((isShashinHighMiddle(pos)||isShashinPositionPetrosian(pos))||(pos.key()!=pos.this_thread()->shashinPosKey)){
             thisThread->nmpMinPly = 0;
             }
             //from Crystal end
             if (v >= beta)
                 return nullValue;
         }
-        }
+        //}
     }
 
-    // Step 10. If the position doesn't a have ttMove, decrease depth by 2
+    // Step 10. If the position doesn't have a ttMove, decrease depth by 2
     // (or by 4 if the TT entry for the current position was hit and the stored depth is greater than or equal to the current depth).
     // Use qsearch if depth is equal or below zero (~9 Elo)
     if (    PvNode
         && !ttMove
         && ((!gameCycle && depth >= 3 && (ss-1)->moveCount > 1 ) 
-        ||(isShashinMiddleLow(pos)) || (pos.key()!=pos.this_thread()->shashinPosKey)))//from Crystal
+        ||(((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA)) || (pos.key()!=pos.this_thread()->shashinPosKey))))//from Crystal
     {
-		depth -= 2 + ((isShashinMiddleLow(pos))
-                        || (pos.key()!=pos.this_thread()->shashinPosKey)? 2 * (ss->ttHit && tte->depth() >= depth):0);//from Crystal
+		depth -= 2 + ((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL) 
+                        || (pos.key()!=pos.this_thread()->shashinPosKey))? 2 * (ss->ttHit && tte->depth() >= depth):0;//from Crystal
     }
-    //from Crystal begin
-	if((isShashinMiddleLow(pos))|| (pos.key()!=pos.this_thread()->shashinPosKey)){
     if (depth <= 0)
     {
         return qsearch<PV>(pos, ss, alpha, beta);
     }
     if (    cutNode
-        && ((!(ss-1)->secondaryLine)||(isShashinMiddleLow(pos))
-                                        || (pos.key()!=pos.this_thread()->shashinPosKey)) //from Crystal
         &&  depth >= 8
         && !ttMove)
         depth -= 2;
-    }
-    //from Crystal end
     probCutBeta = beta + 168 - 61 * improving;
 
     // Step 11. ProbCut (~10 Elo)
@@ -1646,7 +1640,7 @@ namespace {
 		&& !disableNMAndPC // Kelly
 		&&
 		(
-			(((!isShashinMiddleLow(pos))&& (pos.key()==pos.this_thread()->shashinPosKey))
+            ((((pos.this_thread()->shashinWinProbabilityRange==SHASHIN_POSITION_HIGH_TAL)||(pos.this_thread()->shashinWinProbabilityRange==SHASHIN_POSITION_CAPABLANCA))&&(pos.key()==pos.this_thread()->shashinPosKey))
 			  && abs(beta) < VALUE_MATE_IN_MAX_PLY
               && (ttCapture || !ttMove)
 			  // If we don't have a ttHit or our ttDepth is not greater our
@@ -1654,7 +1648,7 @@ namespace {
 			  && (!ss->ttHit || (tte->depth()) < depth - 3)			 
 			)
 			||
-			(((isShashinMiddleLow(pos))|| (pos.key()!=pos.this_thread()->shashinPosKey))
+			((((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA))||(pos.key()!=pos.this_thread()->shashinPosKey))
 			  && !PvNode
 			  &&  abs(beta) < VALUE_TB_WIN_IN_MAX_PLY
 			  // if value from transposition table is lower than probCutBeta, don't attempt probCut
@@ -1721,7 +1715,7 @@ moves_loop: // When in check, search starts here
         && ttCapture
         //from Crystal begin
         && (
-            (isShashinLow(pos))|| (pos.key()!=pos.this_thread()->shashinPosKey)
+            (((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA))||(pos.key()!=pos.this_thread()->shashinPosKey))
             ||    
             (
             !gameCycle
@@ -1823,7 +1817,7 @@ moves_loop: // When in check, search starts here
       ss->secondaryLine = (   (rootNode && moveCount > 1)
                            || (!ourMove && (ss-1)->secondaryLine && !excludedMove && moveCount == 1)
                            || ( ourMove && (ss-1)->secondaryLine));
-      if((!(isShashinHigh(pos)))&& (pos.key()==pos.this_thread()->shashinPosKey))
+      if((pos.this_thread()->shashinWinProbabilityRange==SHASHIN_POSITION_MIDDLE_HIGH_TAL)&& (pos.key()==pos.this_thread()->shashinPosKey))
       {
             if (givesCheck)
             {
@@ -1860,6 +1854,7 @@ moves_loop: // When in check, search starts here
       newDepth = depth - 1;
 
       Value delta = beta - alpha;
+
       Depth r = reduction(improving, depth, moveCount, delta, thisThread->rootDelta);
       // full threads patch begin
       if (thisThread->fullSearch)
@@ -1870,12 +1865,12 @@ moves_loop: // When in check, search starts here
 
       // Step 14. Pruning at shallow depth (~120 Elo). Depth conditions are important for mate finding.
       if ( // from Crystal
-          ((((isShashinHigh(pos))|| (pos.key()!=pos.this_thread()->shashinPosKey)) && 
+          ((((isShashinHigh(pos))|| (pos.key()!=pos.this_thread()->shashinPosKey)||(!isShashinPositionTal(pos))) && 
           !rootNode 
           && pos.non_pawn_material(us)
           && bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
           ||
-           (((!isShashinHigh(pos))&& (pos.key()==pos.this_thread()->shashinPosKey)) && doLMP           
+           (((!isShashinHigh(pos))&& (pos.key()==pos.this_thread()->shashinPosKey)&&(isShashinPositionTal(pos))) && doLMP           
            && (bestValue < (VALUE_MATE_IN_MAX_PLY) || !ourMove)
            && bestValue > VALUE_MATED_IN_MAX_PLY))
           // end from Crystal
@@ -1885,7 +1880,7 @@ moves_loop: // When in check, search starts here
           moveCountPruning = moveCount >= futility_move_count(improving, depth);
 
           //from Crystal begin
-          if (lmPrunable || (isShashinHigh(pos)) || (pos.key()!=pos.this_thread()->shashinPosKey))
+          if (lmPrunable || (isShashinHigh(pos)) || (pos.key()!=pos.this_thread()->shashinPosKey)||(!isShashinPositionTal(pos)))
           {
           // Reduced depth of the next LMR search
           int lmrDepth = newDepth - r;
@@ -1944,7 +1939,7 @@ moves_loop: // When in check, search starts here
               if (   !ss->inCheck
                   && lmrDepth < 12
                   && ((history < 20500 - 3875 * (depth - 1))||
-                      (isShashinMiddleLow(pos)) || (pos.key()!=pos.this_thread()->shashinPosKey)) //from Crystal
+                      ((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA)) || (pos.key()!=pos.this_thread()->shashinPosKey) ) //from Crystal
                   && ss->staticEval + 112 + 138 * lmrDepth <= alpha)
                   continue;
 
@@ -1967,6 +1962,9 @@ moves_loop: // When in check, search starts here
           // then that move is singular and should be extended. To verify this we do
           // a reduced search on all the other moves but the ttMove and if the
           // result is lower than ttValue minus a margin, then we will extend the ttMove.
+          // Depth margin and singularBeta margin are known for having non-linear scaling.
+          // Their values are optimized to time controls of 180+1.8 and longer
+          // so changing them requires tests at this type of time controls.
           if (   !rootNode
               &&  depth >= 4 - (thisThread->completedDepth > 22) + 2 * (PvNode && tte->is_pv())
               &&  move == ttMove
@@ -2080,7 +2078,7 @@ moves_loop: // When in check, search starts here
       // Decrease reduction for PvNodes based on depth (~2 Elo)
       if (PvNode)
       {
-          r -= 1 + (((pos.this_thread()->shashinWinProbabilityRange==SHASHIN_CAPABLANCA_THRESHOLD) || (pos.key()!=pos.this_thread()->shashinPosKey)) 
+          r -= 1 + ((((!isShashinLow(pos)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_HIGH_TAL_THRESHOLD))) || (pos.key()!=pos.this_thread()->shashinPosKey)) 
                ? (12 / (3 + depth)) : 1); //from Crystal
       }
       // Decrease reduction if ttMove has been singularly extended (~1 Elo)
@@ -2108,7 +2106,7 @@ moves_loop: // When in check, search starts here
       // been searched. In general we would like to reduce them, but there are many
       // cases where we extend a son if it has good chances to be "interesting".
       if (  doLMRStep && depth >= 2 && moveCount > sibs // full threads patch + Kelly + lowerLMR
-          &&  moveCount > 1 + (((isShashinHigh(pos))|| (pos.key()!=pos.this_thread()->shashinPosKey))
+          &&  moveCount > 1 + (((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA)|| (pos.key()!=pos.this_thread()->shashinPosKey))
                                ?(PvNode && ss->ply <= 1):0) //from crystal
           && (   !ss->ttPv
               || !capture
@@ -2116,7 +2114,7 @@ moves_loop: // When in check, search starts here
           //from crystal begin
           && 
           ((allowLMR
-          && !lateKingDanger)||((isShashinHigh(pos)) || (pos.key()!=pos.this_thread()->shashinPosKey)))
+          && !lateKingDanger)||((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA) || (pos.key()!=pos.this_thread()->shashinPosKey)))
           //from crystal end
         ) 
       {
@@ -2169,16 +2167,7 @@ moves_loop: // When in check, search starts here
       {
           (ss+1)->pv = pv;
           (ss+1)->pv[0] = MOVE_NONE;
-          
-          /*
-          //from Crystal begin
-          if ((gameCycle && (ss-1)->moveCount < 2)&& ((!(isShashinHigh(pos))
-                && (pos.key()==pos.this_thread()->shashinPosKey))))
-          { 
-              newDepth += 2; 
-          } 
-          //from Crystal end
-          */
+
           value = -search<PV>(pos, ss+1, -beta, -alpha, newDepth, false);
       }
 
@@ -2264,7 +2253,7 @@ moves_loop: // When in check, search starts here
                   // Reduce other moves if we have found at least one score improvement (~1 Elo)
                   // Reduce more for depth > 3 and depth < 12 (~1 Elo)
                   if (   depth > 1
-                      && ((!gameCycle)||(pos.this_thread()->shashinWinProbabilityRange==SHASHIN_POSITION_CAPABLANCA)
+                      && ((!gameCycle)||(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA)
                                          ||(pos.key()!=pos.this_thread()->shashinPosKey) )//from Crystal
                       && beta  <  14362
                       && value > -12393)
@@ -2319,8 +2308,8 @@ moves_loop: // When in check, search starts here
         int bonus = (depth > 5) + (PvNode || cutNode) + (bestValue < alpha - 113 * depth) + ((ss-1)->moveCount > 12);
         update_continuation_histories(ss-1, pos.piece_on(prevSq), prevSq, stat_bonus(depth) * bonus);
     }
-
-    if (PvNode && ((isShashinHigh(pos))||(pos.key()!=pos.this_thread()->shashinPosKey)))//From Crystal
+    
+    if (PvNode && ((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA)||(pos.key()!=pos.this_thread()->shashinPosKey)))//From Crystal
         bestValue = std::min(bestValue, maxValue);
 
     // If no good move is found and the previous position was ttPv, then the previous
@@ -2408,7 +2397,8 @@ moves_loop: // When in check, search starts here
     // At non-PV nodes we check for an early TT cutoff
     if (  !PvNode
         // from Crystal begin
-        && ((isShashinLow(pos)||(pos.key()!=pos.this_thread()->shashinPosKey)) || 
+        && ((((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)&&(pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_CAPABLANCA))
+                                 ||(pos.key()!=pos.this_thread()->shashinPosKey)) || 
         ((!gameCycle)
         && ((ss->ply & 1) || beta < VALUE_MATE_IN_MAX_PLY)
         && (ttValue != VALUE_DRAW || VALUE_DRAW >= beta))) 
@@ -2496,7 +2486,7 @@ moves_loop: // When in check, search starts here
                 &&  futilityBase > -VALUE_KNOWN_WIN
                 &&  type_of(move) != PROMOTION)
             {
-                if (moveCount > 2 + (((isShashinMiddleLow(pos))
+                if (moveCount > 2 + (((pos.this_thread()->shashinWinProbabilityRange!=SHASHIN_POSITION_HIGH_TAL)
                                  ||(pos.key()!=pos.this_thread()->shashinPosKey))?0:PvNode))//from Crystal
                     continue;
 

@@ -758,7 +758,8 @@ public class DroidChessController {
                 } else {
                     buf.append(String.format(Locale.US, "%.2f", score / 100.0));
                 }
-
+                buf.append(String.format(Locale.US, " %d ", pvi.winProbability));
+				buf.append(String.format(Locale.US, "%s ", pvi.positionType));
                 buf.append(pvi.pvStr);
             }
             StringBuilder statStrTmp = new StringBuilder();

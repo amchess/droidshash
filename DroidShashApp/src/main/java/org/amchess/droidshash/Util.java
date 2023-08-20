@@ -38,6 +38,85 @@ import android.widget.TextView;
 public final class Util {
     public final static String boldStart;
     public final static String boldStop;
+    public enum ShashinThreeshold
+    {
+        SHASHIN_LOW_TAL_THRESHOLD(76),
+        SHASHIN_MIDDLE_LOW_TAL_THRESHOLD(81),
+        SHASHIN_MIDDLE_TAL_THRESHOLD(88),
+        SHASHIN_MIDDLE_HIGH_TAL_THRESHOLD(91),
+        SHASHIN_HIGH_TAL_THRESHOLD(96),
+        SHASHIN_CAPABLANCA_THRESHOLD(51),
+        SHASHIN_LOW_PETROSIAN_THRESHOLD(24),
+        SHASHIN_MIDDLE_LOW_PETROSIAN_THRESHOLD(19),
+        SHASHIN_MIDDLE_PETROSIAN_THRESHOLD(12),
+        SHASHIN_MIDDLE_HIGH_PETROSIAN_THRESHOLD(9),
+        SHASHIN_HIGH_PETROSIAN_THRESHOLD(4);
+        private int value;
+
+        private ShashinThreeshold(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    };
+
+    public static String getPositionType(int winProbability) {
+        if (winProbability <= ShashinThreeshold.SHASHIN_HIGH_PETROSIAN_THRESHOLD.getValue())
+        {
+            return "HP";
+        }
+        if ((winProbability > ShashinThreeshold.SHASHIN_HIGH_PETROSIAN_THRESHOLD.getValue()) && (winProbability <= ShashinThreeshold.SHASHIN_MIDDLE_HIGH_PETROSIAN_THRESHOLD.getValue()))
+        {
+            return "MHP";
+        }
+        if ((winProbability > ShashinThreeshold.SHASHIN_MIDDLE_HIGH_PETROSIAN_THRESHOLD.getValue()) && (winProbability <= ShashinThreeshold.SHASHIN_MIDDLE_PETROSIAN_THRESHOLD.getValue()))
+        {
+            return "MP";
+        }
+        if ((winProbability > ShashinThreeshold.SHASHIN_MIDDLE_PETROSIAN_THRESHOLD.getValue()) && (winProbability <= ShashinThreeshold.SHASHIN_MIDDLE_LOW_PETROSIAN_THRESHOLD.getValue()))
+        {
+            return "MLP";
+        }
+        if ((winProbability > ShashinThreeshold.SHASHIN_MIDDLE_LOW_PETROSIAN_THRESHOLD.getValue()) && (winProbability <= ShashinThreeshold.SHASHIN_LOW_PETROSIAN_THRESHOLD.getValue()))
+        {
+            return "LP";
+        }
+        if ((winProbability > ShashinThreeshold.SHASHIN_LOW_PETROSIAN_THRESHOLD.getValue()) && (winProbability <= 100-ShashinThreeshold.SHASHIN_CAPABLANCA_THRESHOLD.getValue()))
+        {
+            return "CCP";
+        }
+        if ((winProbability > (100-ShashinThreeshold.SHASHIN_CAPABLANCA_THRESHOLD.getValue())) && (winProbability < ShashinThreeshold.SHASHIN_CAPABLANCA_THRESHOLD.getValue()))
+        {
+            return "C";
+        }
+        if ((winProbability < ShashinThreeshold.SHASHIN_LOW_TAL_THRESHOLD.getValue()) && (winProbability >= ShashinThreeshold.SHASHIN_CAPABLANCA_THRESHOLD.getValue()))
+        {
+            return "CCT";
+        }
+        if ((winProbability < ShashinThreeshold.SHASHIN_MIDDLE_LOW_TAL_THRESHOLD.getValue()) && (winProbability >= ShashinThreeshold.SHASHIN_LOW_TAL_THRESHOLD.getValue()))
+        {
+            return "LT";
+        }
+        if ((winProbability < ShashinThreeshold.SHASHIN_MIDDLE_TAL_THRESHOLD.getValue()) && (winProbability >= ShashinThreeshold.SHASHIN_MIDDLE_LOW_TAL_THRESHOLD.getValue()))
+        {
+            return "LMT";
+        }
+        if ((winProbability < ShashinThreeshold.SHASHIN_MIDDLE_HIGH_TAL_THRESHOLD.getValue()) && (winProbability >= ShashinThreeshold.SHASHIN_MIDDLE_TAL_THRESHOLD.getValue()))
+        {
+            return "MT";
+        }
+        if ((winProbability < ShashinThreeshold.SHASHIN_HIGH_TAL_THRESHOLD.getValue()) && (winProbability >= ShashinThreeshold.SHASHIN_MIDDLE_HIGH_TAL_THRESHOLD.getValue()))
+        {
+            return "MHT";
+        }
+        if (winProbability >=ShashinThreeshold.SHASHIN_HIGH_TAL_THRESHOLD.getValue())
+        {
+            return "HT";
+        }
+        return "TCP";
+    }
 
     static {
         // Using bold face causes crashes in android 4.1, see:

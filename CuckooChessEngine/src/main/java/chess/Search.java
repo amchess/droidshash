@@ -122,7 +122,7 @@ public class Search {
     public interface Listener {
         void notifyDepth(int depth);
         void notifyCurrMove(Move m, int moveNr);
-        void notifyPV(int depth, int score, int time, long nodes, int nps,
+        void notifyPV(int depth, int score, int winProbability, String positionType, int time, long nodes, int nps,
                       boolean isMate, boolean upperBound, boolean lowerBound, ArrayList<Move> pv);
         void notifyStats(long nodes, int nps, int time);
     }
@@ -305,7 +305,7 @@ public class Search {
                         if (verbose)
                             System.out.printf("%-6s %6d %6d %6d >=\n", TextIO.moveToString(pos, m, false),
                                     score, nodes, qNodes);
-                        notifyPV(depthS/plyScale, score, false, true, m);
+                        notifyPV(depthS/plyScale, score, 50,"C",false, true, m);
                         nodes = qNodes = 0;
                         posHashList[posHashListSize++] = pos.zobristHash();
                         pos.makeMove(m, ui);
@@ -327,7 +327,7 @@ public class Search {
                         if (verbose)
                             System.out.printf("%-6s %6d %6d %6d <=\n", TextIO.moveToString(pos, m, false),
                                     score, nodes, qNodes);
-                        notifyPV(depthS/plyScale, score, true, false, m);
+                        notifyPV(depthS/plyScale, score, 50,"C",true, false, m);
                         nodes = qNodes = 0;
                         posHashList[posHashListSize++] = pos.zobristHash();
                         pos.makeMove(m, ui);
@@ -361,7 +361,7 @@ public class Search {
                                 nodes, qNodes, (score > alpha ? " *" : ""), PV);
                     }
                     if (havePV && !firstIteration) {
-                        notifyPV(depthS/plyScale, score, false, false, m);
+                        notifyPV(depthS/plyScale, score, 50,"C",false, false, m);
                     }
                 }
                 scMoves[mi].move.score = score;
@@ -390,7 +390,7 @@ public class Search {
             if (firstIteration) {
                 Arrays.sort(scMoves, new MoveInfo.SortByScore());
                 bestMove = scMoves[0].move;
-                notifyPV(depthS/plyScale, bestMove.score, false, false, bestMove);
+                notifyPV(depthS/plyScale, bestMove.score, 50,"C",false, false, bestMove);
             }
             long tNow = System.currentTimeMillis();
             if (verbose) {
@@ -432,7 +432,7 @@ public class Search {
         return bestMove;
     }
 
-    private void notifyPV(int depth, int score, boolean uBound, boolean lBound, Move m) {
+    private void notifyPV(int depth, int score, int winProbability, String positionType, boolean uBound, boolean lBound, Move m) {
         if (listener != null) {
             boolean isMate = false;
             if (score > MATE0 / 2) {
@@ -446,7 +446,7 @@ public class Search {
             int time = (int) (tNow - tStart);
             int nps = (time > 0) ? (int)(totalNodes / (time / 1000.0)) : 0;
             ArrayList<Move> pv = tt.extractPVMoves(pos, m);
-            listener.notifyPV(depth, score, time, totalNodes, nps, isMate, uBound, lBound, pv);
+            listener.notifyPV(depth, score, winProbability, positionType, time, totalNodes, nps, isMate, uBound, lBound, pv);
         }
     }
 

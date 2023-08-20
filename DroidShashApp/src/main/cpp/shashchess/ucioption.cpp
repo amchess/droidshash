@@ -94,7 +94,7 @@ void init(OptionsMap& o) {
   o["LimitStrength_CB"]      << Option(false,on_LimitStrength_CB);
   o["UCI_Elo"]               << Option(3190, 1320, 3190);//handicap mode from ShashChess 
   o["ELO_CB"]                << Option(3190, 1320, 3190);//handicap mode from ShashChess 
-  o["UCI_ShowWDL"]           << Option(false);
+  o["UCI_ShowWDL"]           << Option(true);
   o["SyzygyPath"]            << Option("<empty>", on_tb_path);
   o["Syzygy50MoveRule"]      << Option(true);
   o["SyzygyProbeDepth"]      << Option(1, 1, 100);

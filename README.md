@@ -225,7 +225,7 @@ the engine is thinking about what move to play in a game, if *Left drawer menu*
 
 The first line of information has the following format:
 
-[*depth*] *score* *principal_variation*
+[*depth*] *score* *win_probability* *principal_variation*
 
 * *Depth* is the search depth the engine used when it calculated the score and
   the principal variation. Search depth is measured in number of half-moves.
@@ -245,6 +245,24 @@ The first line of information has the following format:
   **Hint!** To instead show scores from the perspective of the side to move, go
   to *Left Drawer Menu* -> *Settings* -> *Hints* and disable *White-based
   scores*.
+
+* The *win probability* shows the wdl model equivalent of score and ply. It's 
+  the best number to evaluate a position. The abbreviations are the following
+  ones (see <a href="https://github.com/amchess/ShashChess/blob/master/README.md" target="_blank">
+  Readme</a>):
+  HP:High Petrosian
+  MHP:Middle-High Petrosian
+  MP:Middle Petrosian
+  MLP:Middle-Low Petrosian
+  LP:Low Petrosian
+  CCP:Caos: Capablanca-Low Petrosian
+  C:Capablanca
+  CCT:Caos: Capablanca-Low Tal
+  LT:Low Tal
+  LMT:Low-Middle Tal
+  MTMiddle Tal
+  MHT:Middle-High Tal
+  HT:High Tal
 
 * The *principal variation* shows the best game continuation for both sides
   according to the engine.

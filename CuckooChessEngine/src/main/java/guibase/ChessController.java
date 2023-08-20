@@ -62,6 +62,8 @@ public class ChessController {
 
         int pvDepth = 0;
         int pvScore = 0;
+		int pvWinProbability=50;
+		String pvPositionType="C";
         boolean pvIsMate = false;
         boolean pvUpperBound = false;
         boolean pvLowerBound = false;
@@ -80,6 +82,8 @@ public class ChessController {
             } else {
                 buf.append(String.format(Locale.US, "%.2f", pvScore / 100.0));
             }
+			buf.append(String.format(Locale.US, " %d ", pvWinProbability));
+			buf.append(String.format(Locale.US, " %s ", pvPositionType));
             buf.append(pvStr);
             buf.append(String.format(Locale.US, "%n"));
             buf.append(String.format(Locale.US, "d:%d %d:%s t:%.2f n:%d nps:%d", currDepth,
@@ -102,10 +106,12 @@ public class ChessController {
             setSearchInfo();
         }
 
-        public void notifyPV(int depth, int score, int time, long nodes, int nps, boolean isMate,
+        public void notifyPV(int depth, int score, int winProbability, String positionType, int time, long nodes, int nps, boolean isMate,
                 boolean upperBound, boolean lowerBound, ArrayList<Move> pv) {
             pvDepth = depth;
             pvScore = score;
+			pvWinProbability=winProbability;
+            pvPositionType=positionType;
             currTime = time;
             currNodes = nodes;
             currNps = nps;

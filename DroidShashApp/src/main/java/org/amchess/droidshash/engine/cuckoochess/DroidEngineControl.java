@@ -94,7 +94,7 @@ public class DroidEngineControl {
             os.printLine("info currmove %s currmovenumber %d", moveToString(m), moveNr);
         }
 
-        public void notifyPV(int depth, int score, int time, long nodes, int nps, boolean isMate,
+        public void notifyPV(int depth, int score, int winProbability, String positionType, int time, long nodes, int nps, boolean isMate,
                 boolean upperBound, boolean lowerBound, ArrayList<Move> pv) {
             StringBuilder pvBuf = new StringBuilder();
             for (Move m : pv) {
@@ -107,8 +107,8 @@ public class DroidEngineControl {
             } else if (lowerBound) {
                 bound = " lowerbound";
             }
-            os.printLine("info depth %d score %s %d%s time %d nodes %d nps %d pv%s",
-                    depth, isMate ? "mate" : "cp", score, bound, time, nodes, nps, pvBuf.toString());
+            os.printLine("info depth %d score %s %d%s winProbability %d positionType %s time %d nodes %d nps %d pv%s",
+                    depth, isMate ? "mate" : "cp", score, winProbability, positionType, bound, time, nodes, nps, pvBuf.toString());
         }
 
         public void notifyStats(long nodes, int nps, int time) {

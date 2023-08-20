@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.amchess.droidshash.EngineOptions;
+import org.amchess.droidshash.Util;
 import org.amchess.droidshash.book.BookOptions;
 import org.amchess.droidshash.book.DroidBook;
 import org.amchess.droidshash.book.IOpeningBook.BookPosInput;
@@ -941,6 +942,8 @@ public class DroidComputerPlayer {
     private int statCurrDepth = 0;
     private int statPVDepth = 0;
     private int statScore = 0;
+    private int statWinProbability=50;
+	private String statPositionType="C";
     private boolean statIsMate = false;
     private boolean statUpperBound = false;
     private boolean statLowerBound = false;
@@ -963,6 +966,8 @@ public class DroidComputerPlayer {
 
     private void clearInfo() {
         statCurrDepth = statPVDepth = statScore = 0;
+        statWinProbability=50;
+		statPositionType="C";
         statIsMate = statUpperBound = statLowerBound = false;
         statTime = 0;
         statNodes = statTBHits = 0;
@@ -1037,6 +1042,13 @@ public class DroidComputerPlayer {
                     pvModified = true;
                     havePvData = true;
                     statPVDepth = statCurrDepth;
+                } else if (is.equals("wdl")) {
+                    int win = Integer.parseInt(tokens[i++]);
+                    int draw = Integer.parseInt(tokens[i++]);
+                    int loss= Integer.parseInt(tokens[i++]);
+                    statWinProbability=(int)((double)((2* win+draw)*50)/(double)(win+draw+loss));
+					statPositionType= Util.getPositionType(statWinProbability);
+                    pvModified = true;
                 } else if (is.equals("score")) {
                     statIsMate = tokens[i++].equals("mate");
                     statScore = Integer.parseInt(tokens[i++]);
@@ -1054,7 +1066,7 @@ public class DroidComputerPlayer {
             }
             if (havePvData) {
                 while (statPvInfo.size() < pvNum)
-                    statPvInfo.add(new PvInfo(0, 0, 0, 0, 0, 0, 0, 0, false, false, false, new ArrayList<>()));
+                    statPvInfo.add(new PvInfo(0, 0, 50,"C",0, 0, 0, 0, 0, 0, false, false, false, new ArrayList<>()));
                 if (statPvInfo.size() == pvNum)
                     statPvInfo.add(null);
                 ArrayList<Move> moves = new ArrayList<>();
@@ -1065,7 +1077,7 @@ public class DroidComputerPlayer {
                         break;
                     moves.add(m);
                 }
-                statPvInfo.set(pvNum, new PvInfo(statPVDepth, statScore, statTime, statNodes, statNps,
+                statPvInfo.set(pvNum, new PvInfo(statPVDepth, statScore,statWinProbability,statPositionType, statTime, statNodes, statNps,
                                                  statTBHits, statHash, statSelDepth,
                                                  statIsMate, statUpperBound, statLowerBound, moves));
             }

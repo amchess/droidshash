@@ -96,7 +96,7 @@ public class EngineControl {
             os.printf("info currmove %s currmovenumber %d%n", moveToString(m), moveNr);
         }
 
-        public void notifyPV(int depth, int score, int time, long nodes, int nps, boolean isMate,
+        public void notifyPV(int depth, int score, int winProbability, String positionType,int time, long nodes, int nps, boolean isMate,
                 boolean upperBound, boolean lowerBound, ArrayList<Move> pv) {
             StringBuilder pvBuf = new StringBuilder();
             for (Move m : pv) {
@@ -109,8 +109,8 @@ public class EngineControl {
             } else if (lowerBound) {
                 bound = " lowerbound";
             }
-            os.printf("info depth %d score %s %d%s time %d nodes %d nps %d pv%s%n",
-                    depth, isMate ? "mate" : "cp", score, bound, time, nodes, nps, pvBuf.toString());
+            os.printf("info depth %d score %s %d%s winProbability %d positionType %s time %d nodes %d nps %d pv%s%n",
+                    depth, isMate ? "mate" : "cp", score, winProbability, positionType, time, nodes, nps, pvBuf.toString());
         }
 
         public void notifyStats(long nodes, int nps, int time) {
