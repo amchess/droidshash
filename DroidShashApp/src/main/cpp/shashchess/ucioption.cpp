@@ -51,7 +51,6 @@ static void on_tb_path(const Option& o) { Tablebases::init(o); }
 static void on_use_NNUE(const Option&) { Eval::NNUE::init(); }
 static void on_eval_file(const Option&) { Eval::NNUE::init(); }
 static void on_UCI_LimitStrength(const Option& ) { Eval::NNUE::init(); }
-static void on_LimitStrength_CB(const Option& ) { Eval::NNUE::init(); }
 //book management begin
 static void on_book1(const Option& o) { Book::on_book(0, (string)o); }
 static void on_book2(const Option& o) { Book::on_book(1, (string)o); }
@@ -91,9 +90,8 @@ void init(OptionsMap& o) {
   o["UCI_Chess960"]          << Option(false);
   o["UCI_LimitStrength"]     << Option(false, on_UCI_LimitStrength);
   o["Handicapped Depth"]     << Option(false);
-  o["LimitStrength_CB"]      << Option(false,on_LimitStrength_CB);
-  o["UCI_Elo"]               << Option(3190, 1320, 3190);//handicap mode from ShashChess 
-  o["ELO_CB"]                << Option(3190, 1320, 3190);//handicap mode from ShashChess 
+  o["UCI_Elo"]               << Option(3190, 1320, 3190);//handicap mode from ShashChess
+  o["Handicapped avatar player"]  << Option(false);
   o["UCI_ShowWDL"]           << Option(true);
   o["SyzygyPath"]            << Option("<empty>", on_tb_path);
   o["Syzygy50MoveRule"]      << Option(true);

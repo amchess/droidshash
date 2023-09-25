@@ -76,7 +76,7 @@ namespace Eval {
 
   void NNUE::init() {
 
-    useNNUE = Options["Use NNUE"]&&(!Options["UCI_LimitStrength"])&&(!Options["LimitStrength_CB"]);//from handicap mode
+    useNNUE = Options["Use NNUE"]&&(!Options["UCI_LimitStrength"]);//from handicap mode
     if (!useNNUE)
         return;
 

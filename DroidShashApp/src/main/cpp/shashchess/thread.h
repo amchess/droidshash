@@ -79,7 +79,6 @@ public:
   bool fullSearch;//full threads patch
   //begin from Shashin
   int8_t shashinWinProbabilityRange=0;
-  Key shashinPosKey;
   int shashinPly=0;
   //end from Shashin
   bool isMCTS; //from montecarlo
