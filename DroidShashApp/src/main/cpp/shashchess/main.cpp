@@ -34,26 +34,27 @@ using namespace ShashChess;
 
 int main(int argc, char* argv[]) {
 
-  std::cout << engine_info() << std::endl;
+    std::cout << engine_info() << std::endl;
 
-  CommandLine::init(argc, argv);
-  Utility::init(argv[0]); //Khalid
-  UCI::init(Options);
-  Tune::init();
-  LD.init();//Kelly
-  PSQT::init();
-  Bitboards::init();
-  Position::init();
-  Bitbases::init();
-  Endgames::init();
-  Threads.set(size_t(Options["Threads"]));
-  Threads.setFull(Options["Full depth threads"]);//Full threads patch
-  Search::clear(); // After threads are up
-  Eval::NNUE::init();
-  Book::init();//Books management
+    CommandLine::init(argc, argv);
+    Utility::init(argv[0]);  //Khalid
+    UCI::init(Options);
+    Tune::init();
+    LD.init();  //Kelly
+    PSQT::init();
+    Bitboards::init();
+    Position::init();
+    Bitbases::init();
+    Eval::loadAvatar(Options["Avatar File"]);  //handicap mode
+    Endgames::init();
+    Threads.set(size_t(Options["Threads"]));
+    Threads.setFull(Options["Full depth threads"]);  //Full threads patch
+    Search::clear();                                 // After threads are up
+    Eval::NNUE::init();
+    Book::init();  //Books management
 
-  UCI::loop(argc, argv);
+    UCI::loop(argc, argv);
 
-  Threads.set(0);
-  return 0;
+    Threads.set(0);
+    return 0;
 }

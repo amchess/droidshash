@@ -4,68 +4,64 @@
 #include <unordered_map>
 #include "types.h"
 
-enum class LearningMode
-{
-	Off = 1,
-	Standard = 2,
-	Self = 3,
+enum class LearningMode {
+    Off      = 1,
+    Standard = 2,
+    Self     = 3,
 };
 
-struct LearningMove
-{
-    ShashChess::Depth depth = 0;
-    ShashChess::Value score = ShashChess::VALUE_NONE;
-    ShashChess::Move move = ShashChess::MOVE_NONE;
-	int performance = 100;
+struct LearningMove {
+    ShashChess::Depth depth       = 0;
+    ShashChess::Value score       = ShashChess::VALUE_NONE;
+    ShashChess::Move  move        = ShashChess::MOVE_NONE;
+    int               performance = 100;
 };
 
-struct PersistedLearningMove
-{
+struct PersistedLearningMove {
     ShashChess::Key key;
-	LearningMove learningMove;
+    LearningMove    learningMove;
 };
 
-class LearningData
-{
-private:
-    bool isPaused;
-    bool isReadOnly;
-    bool needPersisting;
+class LearningData {
+   private:
+    bool         isPaused;
+    bool         isReadOnly;
+    bool         needPersisting;
     LearningMode learningMode;
 
     std::unordered_multimap<ShashChess::Key, LearningMove*> HT;
-    std::vector<void*> mainDataBuffers;
-    std::vector<void*> newMovesDataBuffers;
+    std::vector<void*>                                      mainDataBuffers;
+    std::vector<void*>                                      newMovesDataBuffers;
 
-private:
+   private:
     bool load(const std::string& filename);
     void insert_or_update(PersistedLearningMove* plm, bool qLearning);
 
-public:
+   public:
     LearningData();
     ~LearningData();
 
-    void pause();
-    void resume();
+    void        pause();
+    void        resume();
     inline bool is_paused() const { return isPaused; };
 
-    void set_learning_mode(const std::string &lm);
+    void         set_learning_mode(const std::string& lm);
     LearningMode learning_mode() const;
-    inline bool is_enabled() const { return learningMode != LearningMode::Off; }
+    inline bool  is_enabled() const { return learningMode != LearningMode::Off; }
 
-    void set_readonly(bool ro) { isReadOnly = ro; }
+    void        set_readonly(bool ro) { isReadOnly = ro; }
     inline bool is_readonly() const { return isReadOnly; }
 
     void clear();
     void init();
     void persist();
 
-	void add_new_learning(ShashChess::Key key, const LearningMove &lm);
+    void add_new_learning(ShashChess::Key key, const LearningMove& lm);
 
-    int probe(ShashChess::Key key, const LearningMove*& learningMove);
-    const LearningMove *probe_move(ShashChess::Key key, ShashChess::Move move);
+    int                 probe(ShashChess::Key key, const LearningMove*& learningMove);
+    const LearningMove* probe_move(ShashChess::Key key, ShashChess::Move move);
 };
 
 extern LearningData LD;
 
-#endif // #ifndef LEARN_H_INCLUDED
+#endif  // #ifndef LEARN_H_INCLUDED

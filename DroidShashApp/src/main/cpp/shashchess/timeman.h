@@ -29,23 +29,24 @@ namespace ShashChess {
 /// the maximum available time, the game move number and other parameters.
 
 class TimeManagement {
-public:
-  void init(Search::LimitsType& limits, Color us, int ply);
-  TimePoint optimum() const { return optimumTime; }
-  TimePoint maximum() const { return maximumTime; }
-  TimePoint elapsed() const { return Search::Limits.npmsec ?
-                                     TimePoint(Threads.nodes_searched()) : now() - startTime; }
+   public:
+    void      init(Search::LimitsType& limits, Color us, int ply);
+    TimePoint optimum() const { return optimumTime; }
+    TimePoint maximum() const { return maximumTime; }
+    TimePoint elapsed() const {
+        return Search::Limits.npmsec ? TimePoint(Threads.nodes_searched()) : now() - startTime;
+    }
 
-  int64_t availableNodes; // When in 'nodes as time' mode
+    int64_t availableNodes;  // When in 'nodes as time' mode
 
-private:
-  TimePoint startTime;
-  TimePoint optimumTime;
-  TimePoint maximumTime;
+   private:
+    TimePoint startTime;
+    TimePoint optimumTime;
+    TimePoint maximumTime;
 };
 
 extern TimeManagement Time;
 
-} // namespace ShashChess
+}  // namespace ShashChess
 
-#endif // #ifndef TIMEMAN_H_INCLUDED
+#endif  // #ifndef TIMEMAN_H_INCLUDED

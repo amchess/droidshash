@@ -41,66 +41,66 @@ namespace ShashChess {
 
 class Thread {
 
-  std::mutex mutex;
-  std::condition_variable cv;
-  size_t idx;
-  bool exit = false, searching = true; // Set before starting std::thread
-  NativeThread stdThread;
+    std::mutex              mutex;
+    std::condition_variable cv;
+    size_t                  idx;
+    bool                    exit = false, searching = true;  // Set before starting std::thread
+    NativeThread            stdThread;
 
-public:
-  explicit Thread(size_t);
-  virtual ~Thread();
-  virtual void search();
-  void clear();
-  void idle_loop();
-  void start_searching();
-  void wait_for_search_finished();
-  size_t id() const { return idx; }
-  bool is_mcts() const { return isMCTS; } //montecarlo
+   public:
+    explicit Thread(size_t);
+    virtual ~Thread();
+    virtual void search();
+    void         clear();
+    void         idle_loop();
+    void         start_searching();
+    void         wait_for_search_finished();
+    size_t       id() const { return idx; }
+    bool         is_mcts() const { return isMCTS; }  //montecarlo
 
-  Pawns::Table pawnsTable;
-  Material::Table materialTable;
-  size_t pvIdx, pvLast;
-  std::atomic<uint64_t> nodes, tbHits, bestMoveChanges;
-  int selDepth, nmpMinPly, nmpSide;//crystal
-  Value bestValue, optimism[COLOR_NB];
-  Value pvValue;//from Crystal
-  
-  bool nmpGuard,nmpGuardV; //from Crystal
-  Position rootPos;
-  StateInfo rootState;
-  Search::RootMoves rootMoves;
-  Depth rootDepth, completedDepth;
-  Value rootDelta;
-  CounterMoveHistory counterMoves;
-  ButterflyHistory mainHistory;
-  CapturePieceToHistory captureHistory;
-  ContinuationHistory continuationHistory[2][2];
-  bool fullSearch;//full threads patch
-  //begin from Shashin
-  int8_t shashinWinProbabilityRange=0;
-  int shashinPly=0;
-  //end from Shashin
-  bool isMCTS; //from montecarlo
- };
+    Pawns::Table          pawnsTable;
+    Material::Table       materialTable;
+    size_t                pvIdx, pvLast;
+    std::atomic<uint64_t> nodes, tbHits, bestMoveChanges;
+    int                   selDepth, nmpMinPly, nmpSide;  //crystal
+    Value                 bestValue, optimism[COLOR_NB];
+    Value                 pvValue;  //from Crystal
+
+    bool                  nmpGuard, nmpGuardV;  //from Crystal
+    Position              rootPos;
+    StateInfo             rootState;
+    Search::RootMoves     rootMoves;
+    Depth                 rootDepth, completedDepth;
+    Value                 rootDelta;
+    CounterMoveHistory    counterMoves;
+    ButterflyHistory      mainHistory;
+    CapturePieceToHistory captureHistory;
+    ContinuationHistory   continuationHistory[2][2];
+    bool                  fullSearch;  //full threads patch
+    //begin from Shashin
+    int8_t shashinWinProbabilityRange = 0;
+    int    shashinPly                 = 0;
+    //end from Shashin
+    bool isMCTS;  //from montecarlo
+};
 
 
 /// MainThread is a derived class specific for main thread
 
-struct MainThread : public Thread {
+struct MainThread: public Thread {
 
-  using Thread::Thread;
+    using Thread::Thread;
 
-  void search() override;
-  void check_time();
+    void search() override;
+    void check_time();
 
-  double previousTimeReduction;
-  Value bestPreviousScore;
-  Value bestPreviousAverageScore;
-  Value iterValue[4];
-  int callsCnt;
-  bool stopOnPonderhit;
-  std::atomic_bool ponder;
+    double           previousTimeReduction;
+    Value            bestPreviousScore;
+    Value            bestPreviousAverageScore;
+    Value            iterValue[4];
+    int              callsCnt;
+    bool             stopOnPonderhit;
+    std::atomic_bool ponder;
 };
 
 
@@ -110,42 +110,42 @@ struct MainThread : public Thread {
 
 struct ThreadPool {
 
-  void start_thinking(Position&, StateListPtr&, const Search::LimitsType&, bool = false);
-  void clear();
-  void set(size_t);
-  void setFull(size_t);//full threads patch
+    void start_thinking(Position&, StateListPtr&, const Search::LimitsType&, bool = false);
+    void clear();
+    void set(size_t);
+    void setFull(size_t);  //full threads patch
 
-  MainThread* main()        const { return static_cast<MainThread*>(threads.front()); }
-  uint64_t nodes_searched() const { return accumulate(&Thread::nodes); }
-  uint64_t tb_hits()        const { return accumulate(&Thread::tbHits); }
-  Thread* get_best_thread() const;
-  void start_searching();
-  void wait_for_search_finished() const;
+    MainThread* main() const { return static_cast<MainThread*>(threads.front()); }
+    uint64_t    nodes_searched() const { return accumulate(&Thread::nodes); }
+    uint64_t    tb_hits() const { return accumulate(&Thread::tbHits); }
+    Thread*     get_best_thread() const;
+    void        start_searching();
+    void        wait_for_search_finished() const;
 
-  std::atomic_bool stop, increaseDepth;
+    std::atomic_bool stop, increaseDepth;
 
-  auto cbegin() const noexcept { return threads.cbegin(); }
-  auto begin() noexcept { return threads.begin(); }
-  auto end() noexcept { return threads.end(); }
-  auto cend() const noexcept { return threads.cend(); }
-  auto size() const noexcept { return threads.size(); }
-  auto empty() const noexcept { return threads.empty(); }
+    auto cbegin() const noexcept { return threads.cbegin(); }
+    auto begin() noexcept { return threads.begin(); }
+    auto end() noexcept { return threads.end(); }
+    auto cend() const noexcept { return threads.cend(); }
+    auto size() const noexcept { return threads.size(); }
+    auto empty() const noexcept { return threads.empty(); }
 
-private:
-  StateListPtr setupStates;
-  std::vector<Thread*> threads;
+   private:
+    StateListPtr         setupStates;
+    std::vector<Thread*> threads;
 
-  uint64_t accumulate(std::atomic<uint64_t> Thread::* member) const {
+    uint64_t accumulate(std::atomic<uint64_t> Thread::*member) const {
 
-    uint64_t sum = 0;
-    for (Thread* th : threads)
-        sum += (th->*member).load(std::memory_order_relaxed);
-    return sum;
-  }
+        uint64_t sum = 0;
+        for (Thread* th : threads)
+            sum += (th->*member).load(std::memory_order_relaxed);
+        return sum;
+    }
 };
 
 extern ThreadPool Threads;
 
-} // namespace ShashChess
+}  // namespace ShashChess
 
-#endif // #ifndef THREAD_H_INCLUDED
+#endif  // #ifndef THREAD_H_INCLUDED

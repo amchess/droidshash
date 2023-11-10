@@ -24,15 +24,14 @@
 #include "types.h"
 
 
-namespace ShashChess::PSQT
-{
+namespace ShashChess::PSQT {
 
 extern Score psq[PIECE_NB][SQUARE_NB];
 
 // Fill psqt array from a set of internally linked parameters
 void init();
 
-} // namespace ShashChess::PSQT
+}  // namespace ShashChess::PSQT
 
 
-#endif // PSQT_H_INCLUDED
+#endif  // PSQT_H_INCLUDED
