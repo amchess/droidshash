@@ -152,8 +152,7 @@ void init(OptionsMap& o) {
     o["Read only learning"] << Option(false, on_readonly_learning);
     o["MCTS by Shashin"] << Option(false);
     o["MCTSThreads"] << Option(1, 1, 512);
-    o["MCTSGoldDigger"] << Option(1, 1, 6);
-    o["MTCS Multi Strategy"] << Option(20, 0, 100);
+    o["MCTS Multi Strategy"] << Option(20, 0, 100);
     o["MCTS Multi MinVisits"] << Option(5, 0, 1000);
     o["Concurrent Experience"] << Option(false);
     o["High Tal"] << Option(false);

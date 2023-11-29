@@ -30,8 +30,8 @@ class LearningData {
     LearningMode learningMode;
 
     std::unordered_multimap<ShashChess::Key, LearningMove*> HT;
-    std::vector<void*>                                      mainDataBuffers;
-    std::vector<void*>                                      newMovesDataBuffers;
+    std::vector<void*>                                     mainDataBuffers;
+    std::vector<void*>                                     newMovesDataBuffers;
 
    private:
     bool load(const std::string& filename);

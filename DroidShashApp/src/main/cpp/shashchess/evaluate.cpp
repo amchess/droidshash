@@ -261,21 +261,19 @@ struct Weight {
     std::string mgName;
     std::string egName;
     int         mg, eg;
-} Weights[AVATAR_NB] = {
-  {"Material(mg)", "Material(eg)", 100, 100},
-  {"Imbalance(mg)", "Imbalance(eg)", 100, 100},
-  {"PawnStructure(mg)", "PawnStructure(eg)", 100, 100},
-  {"Knight(mg)", "Knight(eg)", 100, 100},
-  {"Bishop(mg)", "Bishop(mg)", 100, 100},
-  {"Rook(mg)", "Rook(eg)", 100, 100},
-  {"Queen(mg)", "Queen(eg)", 100, 100},
-  {"Mobility(mg)", "Mobility(eg)", 100, 100},
-  {"KingSafety(mg)", "KingSafety(eg)", 100, 100},
-  {"Threats(mg)", "Threats(eg)", 100, 100},
-  {"PassedPawns(mg)", "PassedPawns(eg)", 100, 100},
-  {"Space(mg)", "Space(eg)", 100, 100},
-  {"", "Winnable(eg)", 0, 100}  //Winnable is only an EG value
-};
+} Weights[AVATAR_NB] = {{"Material(mg)", "Material(eg)", 100, 100},
+                        {"Imbalance(mg)", "Imbalance(eg)", 100, 100},
+                        {"PawnStructure(mg)", "PawnStructure(eg)", 100, 100},
+                        {"Knight(mg)", "Knight(eg)", 100, 100},
+                        {"Bishop(mg)", "Bishop(mg)", 100, 100},
+                        {"Rook(mg)", "Rook(eg)", 100, 100},
+                        {"Queen(mg)", "Queen(eg)", 100, 100},
+                        {"Mobility(mg)", "Mobility(eg)", 100, 100},
+                        {"KingSafety(mg)", "KingSafety(eg)", 100, 100},
+                        {"Threats(mg)", "Threats(eg)", 100, 100},
+                        {"PassedPawns(mg)", "PassedPawns(eg)", 100, 100},
+                        {"Space(mg)", "Space(eg)", 100, 100},
+                        {"Winnable(mg)", "Winnable(eg)", 100, 100}};
 
 #define S(mg, eg) make_score(mg, eg)
 //handicap mode end
@@ -1027,6 +1025,12 @@ Value Evaluation<T>::winnable(Score score) const {
         sf -= 4 * !pawnsOnBothFlanks;
     }
 
+    Score w = make_score(mg, eg);
+    w       = apply_weights(w, WINNABLE_INDEX);
+
+    mg = mg_value(w);
+    eg = eg_value(w);
+
     // Interpolate between the middlegame and (scaled by 'sf') endgame score
     v = mg * int(me->game_phase())
       + eg * int(PHASE_MIDGAME - me->game_phase()) * ScaleFactor(sf) / SCALE_FACTOR_NORMAL;
@@ -1034,9 +1038,11 @@ Value Evaluation<T>::winnable(Score score) const {
 
     if constexpr (T)
     {
-        Trace::add(WINNABLE,
-                   make_score(u, eg * ScaleFactor(sf) / SCALE_FACTOR_NORMAL - eg_value(score)));
-        Trace::add(TOTAL, make_score(mg, eg * ScaleFactor(sf) / SCALE_FACTOR_NORMAL));
+        Trace::add(WINNABLE, w);
+        Trace::add(TOTAL,
+                   make_score(mg * int(me->game_phase()), eg * int(PHASE_MIDGAME - me->game_phase())
+                                                            * ScaleFactor(sf) / SCALE_FACTOR_NORMAL)
+                     / PHASE_MIDGAME);
     }
 
     return Value(v);
